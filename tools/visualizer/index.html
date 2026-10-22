@@ -1,0 +1,1042 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pipeline Visualizer</title>
+<style>
+:root {
+  --bg: #03050b;
+  --ink: #dbe6ff;
+  --dim: #6f7ea6;
+  --faint: rgba(130, 160, 255, .14);
+  --panel: rgba(9, 14, 28, .78);
+  --mono: "JetBrains Mono", "Cascadia Code", Consolas, ui-monospace, monospace;
+  --sans: "Segoe UI", system-ui, -apple-system, sans-serif;
+  --ok: #4ade80;
+  --bad: #f87171;
+  --warn: #fbbf24;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  background: radial-gradient(1200px 700px at 50% 35%, #0b1430 0%, var(--bg) 70%) fixed, var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: 64px 1fr 104px;
+  user-select: none;
+}
+button { font: inherit; color: inherit; cursor: pointer; }
+
+/* ── top bar ───────────────────────────────────────────── */
+#bar {
+  display: flex; align-items: center; gap: 12px;
+  padding: 0 18px;
+  border-bottom: 1px solid var(--faint);
+  background: linear-gradient(180deg, rgba(10, 16, 34, .9), rgba(4, 7, 15, .6));
+  position: relative; z-index: 20;
+}
+.chip {
+  font: 600 11px var(--mono); letter-spacing: .04em;
+  padding: 5px 10px; border-radius: 99px;
+  border: 1px solid var(--faint); color: var(--dim);
+  white-space: nowrap;
+}
+.chip b { color: #8ab4ff; font-weight: 700; }
+.ctl {
+  height: 36px; min-width: 36px; padding: 0 12px;
+  border-radius: 10px; border: 1px solid rgba(130, 160, 255, .22);
+  background: rgba(30, 44, 80, .35);
+  font: 600 13px var(--mono);
+  transition: background .2s, border-color .2s, box-shadow .2s;
+}
+.ctl:hover { background: rgba(70, 100, 180, .35); border-color: #8ab4ff; }
+.ctl.on { border-color: #f472b6; box-shadow: 0 0 18px -4px #f472b6; color: #ffd1ea; }
+#sentence {
+  flex: 1; min-width: 0;
+  display: flex; align-items: center; gap: 12px;
+  justify-content: center;
+}
+#q {
+  font: 600 21px var(--sans);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  max-width: 62vw;
+  text-shadow: 0 0 18px rgba(138, 180, 255, .45);
+  cursor: pointer;
+}
+#qi { font: 600 12px var(--mono); color: var(--dim); }
+#steps { display: flex; gap: 3px; align-items: center; }
+#steps i {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--c, #445); opacity: .25; transition: opacity .2s, transform .2s;
+}
+#steps i.done { opacity: .8; }
+#steps i.now { opacity: 1; transform: scale(1.6); box-shadow: 0 0 10px var(--c); }
+
+/* ── stage ─────────────────────────────────────────────── */
+#viewport { position: relative; overflow: hidden; }
+#world { position: absolute; inset: 0; }
+#world.shake { animation: shake .32s; }
+@keyframes shake {
+  20% { transform: translate(3px, -2px); } 40% { transform: translate(-3px, 2px); }
+  60% { transform: translate(2px, 1px); } 80% { transform: translate(-1px, -1px); }
+}
+canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+#bg { z-index: 0; }
+#fx { z-index: 50; }
+#boxes { position: absolute; inset: 0; z-index: 10; }
+
+.box {
+  position: absolute;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--c) 40%, transparent);
+  background: linear-gradient(160deg, color-mix(in srgb, var(--c) 9%, rgba(10, 15, 30, .82)), rgba(6, 9, 18, .82));
+  box-shadow: 0 0 30px -16px var(--c), inset 0 1px 0 rgba(255, 255, 255, .04);
+  transition: border-color .35s, box-shadow .35s, opacity .35s;
+  overflow: hidden;
+}
+.box.container {
+  background: linear-gradient(160deg, color-mix(in srgb, var(--c) 6%, rgba(8, 12, 24, .45)), rgba(5, 8, 16, .35));
+  border-style: solid;
+}
+.box.idle { opacity: .5; }
+.box.idle.lit { opacity: 1; }
+.box.active {
+  border-color: var(--c);
+  box-shadow: 0 0 0 1px var(--c), 0 0 46px -6px var(--c), inset 0 0 60px -30px var(--c);
+}
+.box.hit:not(.container) { animation: hit .55s cubic-bezier(.2, .9, .3, 1.4); }
+.box.container.hit { animation: flash .6s; }
+@keyframes hit { 0% { transform: scale(1); } 35% { transform: scale(1.045); } 100% { transform: scale(1); } }
+@keyframes flash { 0% { box-shadow: 0 0 0 2px var(--c), 0 0 60px var(--c); } 100% {} }
+.head {
+  height: 28px; display: flex; align-items: center; gap: 8px;
+  padding: 0 10px; white-space: nowrap;
+}
+.name { font: 700 12.5px var(--mono); color: var(--c); letter-spacing: .02em; }
+.meta { font: 500 10px var(--mono); color: var(--dim); overflow: hidden; text-overflow: ellipsis; }
+.grow { flex: 1; }
+.hits {
+  font: 700 10px var(--mono); color: var(--c);
+  padding: 1px 7px; border-radius: 99px;
+  background: color-mix(in srgb, var(--c) 14%, transparent);
+  opacity: 0; transition: opacity .3s;
+}
+.hits.show { opacity: 1; }
+.todo {
+  font: 700 9px var(--mono); color: var(--warn);
+  padding: 1px 6px; border-radius: 99px;
+  border: 1px solid rgba(251, 191, 36, .4);
+  background: repeating-linear-gradient(45deg, rgba(251, 191, 36, .22) 0 4px, transparent 4px 8px);
+}
+.core {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--c); box-shadow: 0 0 12px var(--c);
+  opacity: .55;
+}
+.box.active > .head .core { opacity: 1; animation: beat 1s infinite; }
+@keyframes beat { 50% { transform: scale(1.5); } }
+.body {
+  position: absolute; left: 10px; right: 10px; top: 30px; bottom: 8px;
+  display: flex; flex-wrap: wrap; align-content: flex-start; gap: 4px;
+  overflow: hidden;
+}
+.tok, .pill {
+  font: 600 11px var(--mono);
+  padding: 2px 7px; border-radius: 6px;
+  background: color-mix(in srgb, var(--c) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--c) 40%, transparent);
+  color: color-mix(in srgb, var(--c) 70%, white);
+  animation: pop .35s backwards;
+}
+@keyframes pop { from { transform: scale(.3) translateY(6px); opacity: 0; } }
+.big {
+  font: 800 26px var(--mono); color: var(--c);
+  text-shadow: 0 0 22px var(--c);
+  width: 100%;
+}
+.small { font: 500 10px var(--mono); color: var(--dim); width: 100%; }
+.slot {
+  flex: 1 1 30%; min-width: 0;
+  border-radius: 8px; padding: 4px 6px;
+  border: 1px dashed color-mix(in srgb, var(--c) 35%, transparent);
+  font: 600 10px var(--mono); color: var(--dim);
+  transition: background .3s, border-color .3s, color .3s;
+}
+.slot b { display: block; font-size: 13px; color: var(--ink); }
+.slot.set { border-style: solid; border-color: var(--c); background: color-mix(in srgb, var(--c) 14%, transparent); }
+.slot.used { animation: used .9s; }
+@keyframes used { 0%, 60% { box-shadow: 0 0 0 2px #e879f9, 0 0 26px #e879f9; } }
+.file { opacity: .35; transition: opacity .3s, box-shadow .3s; }
+.file.lit { opacity: 1; box-shadow: 0 0 16px -2px var(--c); }
+
+/* ── payload card ──────────────────────────────────────── */
+.card {
+  position: absolute; z-index: 60;
+  width: 360px; max-height: 300px; overflow: hidden;
+  padding: 12px 14px 14px;
+  border-radius: 16px;
+  background: rgba(5, 8, 18, .93);
+  border: 1px solid var(--k);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, .5), 0 20px 60px -20px var(--k), 0 0 40px -10px var(--k);
+  animation: cardin .38s cubic-bezier(.2, .9, .3, 1.3);
+  pointer-events: none;
+}
+.card.out { animation: cardout .3s forwards; }
+@keyframes cardin { from { opacity: 0; transform: translateY(14px) scale(.9); } }
+@keyframes cardout { to { opacity: 0; transform: translateY(-10px) scale(.96); } }
+.card .tag {
+  display: inline-block; font: 800 10px var(--mono); letter-spacing: .14em;
+  color: var(--k); margin-bottom: 8px;
+}
+.card .row { display: flex; flex-wrap: wrap; gap: 5px; }
+.card .tok { --c: var(--k); }
+.card .quote { font: 600 18px var(--sans); color: #fff; }
+.card .intent { font: 800 20px var(--mono); color: var(--k); text-shadow: 0 0 16px var(--k); }
+.card .kv { font: 600 11px var(--mono); padding: 3px 8px; border-radius: 7px; background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 255, 255, .1); animation: pop .35s backwards; }
+.card .kv i { font-style: normal; color: var(--dim); }
+.card .mono { font: 600 12px var(--mono); color: #ffe7a3; word-break: break-all; }
+.card .verdict { font: 900 34px var(--mono); }
+.card .answer { font: 600 15px/1.45 var(--sans); color: #fff; }
+.card svg { width: 100%; height: 210px; display: block; }
+.card .reject { font: 900 56px var(--mono); color: var(--bad); text-shadow: 0 0 30px var(--bad); text-align: center; }
+
+/* ── bottom: transformation chain + answer ─────────────── */
+#bottom {
+  display: grid; grid-template-columns: auto 1fr; gap: 18px; align-items: center;
+  padding: 10px 18px;
+  border-top: 1px solid var(--faint);
+  background: linear-gradient(0deg, rgba(10, 16, 34, .92), rgba(4, 7, 15, .6));
+  z-index: 20;
+}
+#chain { display: flex; align-items: center; gap: 6px; }
+.link {
+  width: 92px; height: 70px; border-radius: 12px;
+  border: 1px solid rgba(130, 160, 255, .14);
+  padding: 7px 8px; overflow: hidden;
+  opacity: .32; transition: opacity .3s, border-color .3s, box-shadow .3s, transform .3s;
+}
+.link.on { opacity: 1; border-color: var(--k); box-shadow: 0 0 22px -6px var(--k); transform: translateY(-2px); }
+.link .t { font: 800 9px var(--mono); letter-spacing: .12em; color: var(--k); }
+.link .v { font: 700 12px/1.25 var(--mono); color: var(--ink); margin-top: 6px; word-break: break-all; max-height: 32px; overflow: hidden; }
+.arrow { color: #36406a; font: 700 14px var(--mono); }
+#answer {
+  min-width: 0;
+  font: 600 19px/1.4 var(--sans);
+  color: #fff;
+  text-shadow: 0 0 22px rgba(244, 114, 182, .45);
+  overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+}
+#answer.fallback { color: #ffd38a; text-shadow: 0 0 22px rgba(251, 191, 36, .45); }
+#answer.reject { color: #ffb4b4; text-shadow: 0 0 22px rgba(248, 113, 113, .5); }
+#answer .cursor { display: inline-block; width: 9px; height: 1.05em; background: #f472b6; vertical-align: -3px; animation: blink .7s infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+
+/* ── floating labels ───────────────────────────────────── */
+.float {
+  position: absolute; z-index: 70; pointer-events: none;
+  font: 900 18px var(--mono); color: var(--c);
+  text-shadow: 0 0 18px var(--c);
+  animation: rise 1.4s forwards;
+}
+.float small { display: block; font: 600 9px var(--mono); color: var(--dim); text-shadow: none; }
+@keyframes rise { from { opacity: 0; transform: translateY(8px) scale(.7); } 15% { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(-26px); } }
+
+/* ── picker overlay ────────────────────────────────────── */
+#picker {
+  position: fixed; inset: 0; z-index: 100;
+  background: rgba(2, 4, 10, .72); backdrop-filter: blur(6px);
+  display: none; place-items: center;
+}
+#picker.open { display: grid; }
+#pick {
+  width: min(760px, 92vw); max-height: 80vh;
+  display: flex; flex-direction: column;
+  border-radius: 18px; border: 1px solid rgba(138, 180, 255, .35);
+  background: rgba(7, 11, 24, .96); box-shadow: 0 30px 90px -30px #3b82f6;
+  overflow: hidden;
+}
+#search {
+  margin: 14px; padding: 12px 14px; border-radius: 12px;
+  border: 1px solid rgba(138, 180, 255, .3); background: rgba(20, 30, 60, .5);
+  color: var(--ink); font: 600 16px var(--sans); outline: none;
+}
+#list { overflow: auto; padding: 0 8px 12px; }
+.opt {
+  display: grid; grid-template-columns: 34px 1fr auto; gap: 10px; align-items: center;
+  width: 100%; text-align: left; padding: 8px 10px; border-radius: 10px;
+  border: 0; background: transparent;
+}
+.opt:hover, .opt.cur { background: rgba(80, 110, 200, .22); }
+.opt .n { font: 600 11px var(--mono); color: var(--dim); }
+.opt .s { font: 500 14px var(--sans); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.opt .b { font: 700 10px var(--mono); padding: 2px 7px; border-radius: 99px; color: var(--c); background: color-mix(in srgb, var(--c) 14%, transparent); }
+
+#empty { display: none; place-items: center; font: 700 18px var(--mono); color: var(--dim); }
+body.empty > * { display: none; }
+body.empty #empty { display: grid; height: 100vh; }
+</style>
+</head>
+<body>
+<div id="bar">
+  <span class="chip" id="impl"></span>
+  <button class="ctl" id="prev" title="câu trước (←)">◀</button>
+  <div id="sentence">
+    <span id="qi"></span>
+    <span id="q" title="chọn câu (/)"></span>
+    <span id="steps"></span>
+  </div>
+  <button class="ctl" id="next" title="câu sau (→)">▶</button>
+  <button class="ctl" id="replay" title="chạy lại (R)">↻</button>
+  <button class="ctl" id="play" title="dừng / chạy (Space)">❚❚</button>
+  <button class="ctl" id="speed" title="tốc độ (+ / −)">1×</button>
+  <button class="ctl on" id="stream" title="tự chạy hết các câu (S)">∞</button>
+</div>
+
+<div id="viewport">
+  <div id="world">
+    <canvas id="bg"></canvas>
+    <div id="boxes"></div>
+    <canvas id="fx"></canvas>
+  </div>
+</div>
+
+<div id="bottom">
+  <div id="chain"></div>
+  <div id="answer"></div>
+</div>
+
+<div id="picker"><div id="pick"><input id="search" placeholder="tìm câu…" autocomplete="off"><div id="list"></div></div></div>
+<div id="empty">không có dữ liệu</div>
+
+<script>
+window.TRACE = {"meta":{"impl":"demo","generated":"2026-10-22"},"root":"run","modules":{"answer":{"lines":174,"classes":["AnswerGenerator"],"functions":["_strip_part_prefix","_minutes","_topic_label"],"imports":["query","semantic"],"parent":"pipeline","order":8,"stubs":1},"cli":{"lines":185,"classes":[],"functions":["build_parser","_add_question_source","main","_run_all","_write_evaluations","_questions","_read_questions","_resolve","_interactive"],"imports":["evaluate","generator","output","paths","pipeline"],"parent":"run","order":9,"stubs":0},"dialogue":{"lines":80,"classes":["DialogueContext"],"functions":[],"imports":["query","semantic"],"parent":"pipeline","order":6,"stubs":2},"entities":{"lines":142,"classes":["EntityLexicon"],"functions":[],"imports":["tokenizer"],"parent":"semantic","order":10,"stubs":9},"evaluate":{"lines":279,"classes":["EvaluationCase","EvaluationRecord","EvaluationSummary","DialogueCase"],"functions":["load_evaluation_cases","evaluate_cases","_default_query_status","_query_status","_answer_matches","render_evaluation","_render_summary","load_dialogue_cases","render_dialogue_evaluation"],"imports":["answer","pipeline","tokenizer"],"parent":"cli","order":1004,"stubs":5},"generator":{"lines":86,"classes":["GeneratorStats","SentenceGenerator"],"functions":[],"imports":["grammar","tokenizer"],"parent":"cli","order":1005,"stubs":1},"grammar":{"lines":97,"classes":["Rule","GrammarError","Grammar"],"functions":["_looks_like_nonterminal"],"imports":[],"parent":"parser","order":3,"stubs":2},"kb":{"lines":211,"classes":["KnowledgeBase"],"functions":["_read","_section","_simple_fields","_parse_field_block","_load_course","_parse_los","_load_schedule","_load_topics","_load_assignment","_load_resources","_load_regulations"],"imports":[],"parent":"pipeline","order":1007,"stubs":2},"output":{"lines":67,"classes":[],"functions":["ensure_output_dir","write_grammar","write_samples","write_pipeline_outputs","_write_lines"],"imports":["generator","pipeline"],"parent":"cli","order":1008,"stubs":3},"parser":{"lines":110,"classes":["State","ParseResult","EarleyParser"],"functions":[],"imports":["grammar","tokenizer","tree"],"parent":"pipeline","order":1,"stubs":1},"paths":{"lines":44,"classes":["ProjectPaths"],"functions":[],"imports":[],"parent":"cli","order":1010,"stubs":1},"pipeline":{"lines":69,"classes":["PipelineResult","CourseAssistant"],"functions":[],"imports":["answer","dialogue","entities","grammar","kb","parser","paths","query","semantic"],"parent":"cli","order":0,"stubs":1},"query":{"lines":318,"classes":["QueryResult","QueryEngine"],"functions":["_flatten_text","_whole_phrase"],"imports":["kb","semantic","tokenizer"],"parent":"pipeline","order":7,"stubs":1},"semantic":{"lines":209,"classes":["SemanticFrame","SemanticInterpreter"],"functions":["_format_value"],"imports":["entities","tree"],"parent":"pipeline","order":5,"stubs":1},"tokenizer":{"lines":43,"classes":[],"functions":["normalize_text","tokenize","normalized_phrase","detokenize"],"imports":[],"parent":"pipeline","order":2,"stubs":4},"tree":{"lines":49,"classes":["Tree"],"functions":["_escape_leaf"],"imports":[],"parent":"pipeline","order":4,"stubs":0},"utils":{"lines":17,"classes":[],"functions":["run","test"],"imports":["cli"],"parent":null,"order":1017,"stubs":0},"run":{"lines":17,"classes":[],"functions":[],"imports":["cli"],"parent":null,"order":1013,"stubs":0}},"journeys":[{"sentence":"Tuần 3 học gì?","branch":"Q_SCHEDULE_WEEK","found":true,"kind":"SCHEDULE_WEEK","answer":"Tuần 3 học Chương 3, gồm context-free grammar, grammar and sentence structure, top-down parsing, bottom-up chart parsing, top-down chart parsing, probabilistic context-free grammar, dependency grammar, Stanford dependencies.","hops":[{"type":"call","from":"cli","to":"pipeline","fn":"CourseAssistant.process","payload":{"kind":"text","value":"Tuần 3 học gì?"}},{"type":"call","from":"pipeline","to":"parser","fn":"EarleyParser.parse"},{"type":"visit","from":"parser","to":"tokenizer","fn":"tokenize","payload":{"kind":"tokens","value":["tuần","3","học","gì","?"]}},{"type":"burst","from":"parser","targets":{"grammar":{"Grammar.is_nonterminal":279,"Grammar.rules_for":76},"tree":{"Tree.__init__":14}}},{"type":"return","from":"parser","to":"pipeline","fn":"EarleyParser.parse","payload":{"kind":"tree","value":{"accepted":true,"tree":["S",["PREFIX"],["QUESTION",["Q_SCHEDULE_WEEK",["WEEK_ENTITY","tuần",["WEEK_NUMBER","3"]],["WEEK_CONTENT_QUESTION","học","gì"]]],["SUFFIX",["END_MARK","?"]]]}}},{"type":"call","from":"pipeline","to":"semantic","fn":"SemanticInterpreter.interpret"},{"type":"burst","from":"semantic","targets":{"tree":{"Tree.first":2,"Tree.leaves":1}}},{"type":"visit","from":"semantic","to":"entities","fn":"EntityLexicon.resolve_week","payload":{"kind":"id","value":"WEEK_03"}},{"type":"return","from":"semantic","to":"pipeline","fn":"SemanticInterpreter.interpret","payload":{"kind":"frame","value":{"intent":"GET_SCHEDULE","entity":"WEEK_03","slots":{"week":"WEEK_03"},"branch":"Q_SCHEDULE_WEEK","predicate":"GET_SCHEDULE(entity=WEEK_03, week=WEEK_03)"}}},{"type":"visit","from":"pipeline","to":"dialogue","fn":"DialogueContext.resolve","payload":{"kind":"resolved","value":{"intent":"GET_SCHEDULE","entity":"WEEK_03","slots":{"week":"WEEK_03"},"branch":"Q_SCHEDULE_WEEK","predicate":"GET_SCHEDULE(entity=WEEK_03, week=WEEK_03)","trace":null}}},{"type":"visit","from":"pipeline","to":"query","fn":"QueryEngine.execute","payload":{"kind":"result","value":{"query":"KB.weeks[WEEK_03]","found":true,"kind":"SCHEDULE_WEEK","sources":["kb/schedule.txt"],"data":{"part":"Syntactic Processing","chapter":"Chapter 3","topics":["context-free grammar","grammar and sentence structure","top-down parsing","bottom-up chart parsing","top-down chart parsing","probabilistic context-free grammar","+2"],"week_id":"WEEK_03","chapter_id":"CH03"}}}},{"type":"visit","from":"pipeline","to":"answer","fn":"AnswerGenerator.generate","payload":{"kind":"answer","value":"Tuần 3 học Chương 3, gồm context-free grammar, grammar and sentence structure, top-down parsing, bottom-up chart parsing, top-down chart parsing, probabilistic context-free grammar, dependency grammar, Stanford dependencies."}},{"type":"visit","from":"pipeline","to":"dialogue","fn":"DialogueContext.update","payload":{"kind":"memory","value":{"last_chapter":"CH03","last_assignment_part":null,"last_lo":null,"last_entity":"WEEK_03"}}},{"type":"return","from":"pipeline","to":"cli","fn":"CourseAssistant.process","payload":{"kind":"answer","value":"Tuần 3 học Chương 3, gồm context-free grammar, grammar and sentence structure, top-down parsing, bottom-up chart parsing, top-down chart parsing, probabilistic context-free grammar, dependency grammar, Stanford dependencies."}}]},{"sentence":"Chương nào nói về CFG?","branch":"Q_TOPIC_BY_NAME","found":true,"kind":"TOPIC_SEARCH","answer":"CFG được trình bày trong Chương 3 (GRAMMAR AND PARSING).","hops":[{"type":"call","from":"cli","to":"pipeline","fn":"CourseAssistant.process","payload":{"kind":"text","value":"Chương nào nói về CFG?"}},{"type":"call","from":"pipeline","to":"parser","fn":"EarleyParser.parse"},{"type":"visit","from":"parser","to":"tokenizer","fn":"tokenize","payload":{"kind":"tokens","value":["chương","nào","nói","về","cfg","?"]}},{"type":"burst","from":"parser","targets":{"grammar":{"Grammar.is_nonterminal":312,"Grammar.rules_for":77},"tree":{"Tree.__init__":14}}},{"type":"return","from":"parser","to":"pipeline","fn":"EarleyParser.parse","payload":{"kind":"tree","value":{"accepted":true,"tree":["S",["PREFIX"],["QUESTION",["Q_TOPIC_BY_NAME",["CHAPTER_WH","chương","nào"],["TOPIC_LINK","nói","về"],["TOPIC_ENTITY","cfg"]]],["SUFFIX",["END_MARK","?"]]]}}},{"type":"call","from":"pipeline","to":"semantic","fn":"SemanticInterpreter.interpret"},{"type":"burst","from":"semantic","targets":{"tree":{"Tree.first":2,"Tree.leaves":1}}},{"type":"call","from":"semantic","to":"entities","fn":"EntityLexicon.resolve_topic"},{"type":"visit","from":"entities","to":"tokenizer","fn":"normalized_phrase"},{"type":"return","from":"entities","to":"semantic","fn":"EntityLexicon.resolve_topic","payload":{"kind":"id","value":"CFG"}},{"type":"return","from":"semantic","to":"pipeline","fn":"SemanticInterpreter.interpret","payload":{"kind":"frame","value":{"intent":"GET_TOPIC","entity":"CFG","slots":{"topic":"CFG"},"branch":"Q_TOPIC_BY_NAME","predicate":"GET_TOPIC(entity=CFG, topic=CFG)"}}},{"type":"visit","from":"pipeline","to":"dialogue","fn":"DialogueContext.resolve","payload":{"kind":"resolved","value":{"intent":"GET_TOPIC","entity":"CFG","slots":{"topic":"CFG"},"branch":"Q_TOPIC_BY_NAME","predicate":"GET_TOPIC(entity=CFG, topic=CFG)","trace":null}}},{"type":"call","from":"pipeline","to":"query","fn":"QueryEngine.execute"},{"type":"burst","from":"query","targets":{"tokenizer":{"normalize_text":87}}},{"type":"return","from":"query","to":"pipeline","fn":"QueryEngine.execute","payload":{"kind":"result","value":{"query":"KB.topics.search(CFG)","found":true,"kind":"TOPIC_SEARCH","sources":["kb/topics.txt"],"data":{"topic":"CFG","chapters":[{"chapter_id":"CH03","part":"Syntactic Processing","keywords":"CFG, parsing, PCFG, dependency grammar","summary":"The chapter introduces context-free grammar, sentence structure and parsing methods. It also introduces probabilistic CFG and dependency grammar.","subtopics":"…","chapter_number":3,"title":"GRAMMAR AND PARSING","keyword_list":"…"}]}}}},{"type":"visit","from":"pipeline","to":"answer","fn":"AnswerGenerator.generate","payload":{"kind":"answer","value":"CFG được trình bày trong Chương 3 (GRAMMAR AND PARSING)."}},{"type":"visit","from":"pipeline","to":"dialogue","fn":"DialogueContext.update","payload":{"kind":"memory","value":{"last_chapter":"CH03","last_assignment_part":null,"last_lo":null,"last_entity":"CFG"}}},{"type":"return","from":"pipeline","to":"cli","fn":"CourseAssistant.process","payload":{"kind":"answer","value":"CFG được trình bày trong Chương 3 (GRAMMAR AND PARSING)."}}]},{"sentence":"Chương 4 nói về gì?","branch":"Q_TOPIC_BY_CHAPTER","found":true,"kind":"TOPIC_CHAPTER","answer":"Chương 4 — FEATURES AND AUGMENTED GRAMMAR: The chapter extends formal grammar with feature systems and augmented grammar. It covers lexicon, parsing with features, augmented transition networks, generalized feature systems and unification grammar.","hops":[{"type":"call","from":"cli","to":"pipeline","fn":"CourseAssistant.process","payload":{"kind":"text","value":"Chương 4 nói về gì?"}},{"type":"call","from":"pipeline","to":"parser","fn":"EarleyParser.parse"},{"type":"visit","from":"parser","to":"tokenizer","fn":"tokenize","payload":{"kind":"tokens","value":["chương","4","nói","về","gì","?"]}},{"type":"burst","from":"parser","targets":{"grammar":{"Grammar.is_nonterminal":286,"Grammar.rules_for":78},"tree":{"Tree.__init__":14}}},{"type":"return","from":"parser","to":"pipeline","fn":"EarleyParser.parse","payload":{"kind":"tree","value":{"accepted":true,"tree":["S",["PREFIX"],["QUESTION",["Q_TOPIC_BY_CHAPTER",["CHAPTER_ENTITY","chương",["CHAPTER_NUMBER","4"]],["CHAPTER_CONTENT_QUESTION","nói","về","gì"]]],["SUFFIX",["END_MARK","?"]]]}}},{"type":"call","from":"pipeline","to":"semantic","fn":"SemanticInterpreter.interpret"},{"type":"burst","from":"semantic","targets":{"tree":{"Tree.first":2,"Tree.leaves":1}}},{"type":"visit","from":"semantic","to":"entities","fn":"EntityLexicon.resolve_chapter","payload":{"kind":"id","value":"CH04"}},{"type":"return","from":"semantic","to":"pipeline","fn":"SemanticInterpreter.interpret","payload":{"kind":"frame","value":{"intent":"GET_TOPIC","entity":"CH04","slots":{"chapter":"CH04"},"branch":"Q_TOPIC_BY_CHAPTER","predicate":"GET_TOPIC(entity=CH04, chapter=CH04)"}}},{"type":"visit","from":"pipeline","to":"dialogue","fn":"DialogueContext.resolve","payload":{"kind":"resolved","value":{"intent":"GET_TOPIC","entity":"CH04","slots":{"chapter":"CH04"},"branch":"Q_TOPIC_BY_CHAPTER","predicate":"GET_TOPIC(entity=CH04, chapter=CH04)","trace":null}}},{"type":"visit","from":"pipeline","to":"query","fn":"QueryEngine.execute","payload":{"kind":"result","value":{"query":"KB.topics[CH04]","found":true,"kind":"TOPIC_CHAPTER","sources":["kb/topics.txt"],"data":{"chapter_id":"CH04","part":"Syntactic Processing","keywords":"feature, augmented grammar, lexicon, unification","summary":"The chapter extends formal grammar with feature systems and augmented grammar. It covers lexicon, parsing with features, augmented transition networks, general…","subtopics":["4.1 Feature systems and augmented grammars","4.2 Basic feature systems for English","4.3 Lexicon","4.4 Simple grammar using feature systems","4.5 Parsing with features","4.6 Augmented transition networks","+1"],"chapter_number":4,"title":"FEATURES AND AUGMENTED GRAMMAR","keyword_list":["feature","augmented grammar","lexicon","unification"]}}}},{"type":"visit","from":"pipeline","to":"answer","fn":"AnswerGenerator.generate","payload":{"kind":"answer","value":"Chương 4 — FEATURES AND AUGMENTED GRAMMAR: The chapter extends formal grammar with feature systems and augmented grammar. It covers lexicon, parsing with features, augmented transition networks, generalized feature systems and unification grammar."}},{"type":"visit","from":"pipeline","to":"dialogue","fn":"DialogueContext.update","payload":{"kind":"memory","value":{"last_chapter":"CH04","last_assignment_part":"PART_II","last_lo":"LO4.2","last_entity":"CH04"}}},{"type":"return","from":"pipeline","to":"cli","fn":"CourseAssistant.process","payload":{"kind":"answer","value":"Chương 4 — FEATURES AND AUGMENTED GRAMMAR: The chapter extends formal grammar with feature systems and augmented grammar. It covers lexicon, parsing with features, augmented transition networks, generalized feature systems and unification grammar."}}]},{"sentence":"Nó có liên quan đến parsing không?","branch":"Q_CONTEXT_TOPIC_RELATION","found":true,"kind":"TOPIC_RELATION","answer":"Có. Chương 4 có nội dung liên quan đến parsing.","hops":[{"type":"call","from":"cli","to":"pipeline","fn":"CourseAssistant.process","payload":{"kind":"text","value":"Nó có liên quan đến parsing không?"}},{"type":"call","from":"pipeline","to":"parser","fn":"EarleyParser.parse"},{"type":"visit","from":"parser","to":"tokenizer","fn":"tokenize","payload":{"kind":"tokens","value":["nó","có","liên","quan","đến","parsing","không","?"]}},{"type":"burst","from":"parser","targets":{"grammar":{"Grammar.is_nonterminal":335,"Grammar.rules_for":78},"tree":{"Tree.__init__":16}}},{"type":"return","from":"parser","to":"pipeline","fn":"EarleyParser.parse","payload":{"kind":"tree","value":{"accepted":true,"tree":["S",["PREFIX"],["QUESTION",["Q_CONTEXT_TOPIC_RELATION",["CONTEXT_PRONOUN","nó"],["RELATION_PHRASE","có","liên","quan","đến"],["TOPIC_ENTITY","parsing"],["YES_NO","không"]]],["SUFFIX",["END_MARK","?"]]]}}},{"type":"call","from":"pipeline","to":"semantic","fn":"SemanticInterpreter.interpret"},{"type":"burst","from":"semantic","targets":{"tree":{"Tree.first":2,"Tree.leaves":1}}},{"type":"call","from":"semantic","to":"entities","fn":"EntityLexicon.resolve_topic"},{"type":"visit","from":"entities","to":"tokenizer","fn":"normalized_phrase"},{"type":"return","from":"entities","to":"semantic","fn":"EntityLexicon.resolve_topic","payload":{"kind":"id","value":"PARSING"}},{"type":"return","from":"semantic","to":"pipeline","fn":"SemanticInterpreter.interpret","payload":{"kind":"frame","value":{"intent":"CONTEXT_DEPENDENT","entity":null,"slots":{"action":"TOPIC_RELATION","relation":"PARSING"},"branch":"Q_CONTEXT_TOPIC_RELATION","predicate":"CONTEXT_DEPENDENT(action=TOPIC_RELATION, relation=PARSING)"}}},{"type":"call","from":"pipeline","to":"dialogue","fn":"DialogueContext.resolve"},{"type":"visit","from":"dialogue","to":"semantic","fn":"SemanticFrame.__init__"},{"type":"return","from":"dialogue","to":"pipeline","fn":"DialogueContext.resolve","payload":{"kind":"resolved","value":{"intent":"GET_TOPIC","entity":"CH04","slots":{"chapter":"CH04","relation":"PARSING"},"branch":"Q_CONTEXT_TOPIC_RELATION","predicate":"GET_TOPIC(entity=CH04, chapter=CH04, relation=PARSING)","trace":"tham chiếu gần nhất → CH04"}}},{"type":"call","from":"pipeline","to":"query","fn":"QueryEngine.execute"},{"type":"burst","from":"query","targets":{"tokenizer":{"normalize_text":2}}},{"type":"return","from":"query","to":"pipeline","fn":"QueryEngine.execute","payload":{"kind":"result","value":{"query":"KB.topics[CH04].contains(PARSING)","found":true,"kind":"TOPIC_RELATION","sources":["kb/topics.txt"],"data":{"chapter":{"chapter_id":"CH04","part":"Syntactic Processing","keywords":"feature, augmented grammar, lexicon, unification","summary":"The chapter extends formal grammar with feature systems and augmented grammar. It covers lexicon, parsing with features, augmented transition networks, general…","subtopics":["4.1 Feature systems and augmented grammars","4.2 Basic feature systems for English","4.3 Lexicon","4.4 Simple grammar using feature systems","4.5 Parsing with features","4.6 Augmented transition networks","+1"],"chapter_number":4,"title":"FEATURES AND AUGMENTED GRAMMAR","keyword_list":["feature","augmented grammar","lexicon","unification"]},"relation":"PARSING","related":true}}}},{"type":"visit","from":"pipeline","to":"answer","fn":"AnswerGenerator.generate","payload":{"kind":"answer","value":"Có. Chương 4 có nội dung liên quan đến parsing."}},{"type":"visit","from":"pipeline","to":"dialogue","fn":"DialogueContext.update","payload":{"kind":"memory","value":{"last_chapter":"CH04","last_assignment_part":"PART_II","last_lo":"LO4.2","last_entity":"CH04"}}},{"type":"return","from":"pipeline","to":"cli","fn":"CourseAssistant.process","payload":{"kind":"answer","value":"Có. Chương 4 có nội dung liên quan đến parsing."}}]},{"sentence":"Hôm nay ở TP.HCM có mưa không?","branch":null,"found":false,"kind":"UNKNOWN","answer":"Xin lỗi, câu hỏi không thuộc văn phạm hoặc ngoài phạm vi Course Assistant.","hops":[{"type":"call","from":"cli","to":"pipeline","fn":"CourseAssistant.process","payload":{"kind":"text","value":"Hôm nay ở TP.HCM có mưa không?"}},{"type":"call","from":"pipeline","to":"parser","fn":"EarleyParser.parse"},{"type":"visit","from":"parser","to":"tokenizer","fn":"tokenize","payload":{"kind":"tokens","value":["hôm","nay","ở","tp.hcm","có","mưa","không","?"]}},{"type":"burst","from":"parser","targets":{"grammar":{"Grammar.is_nonterminal":227,"Grammar.rules_for":70},"tree":{"Tree.__init__":2}}},{"type":"return","from":"parser","to":"pipeline","fn":"EarleyParser.parse","payload":{"kind":"tree","value":{"accepted":false,"tree":null}}},{"type":"visit","from":"pipeline","to":"semantic","fn":"SemanticInterpreter.interpret","payload":{"kind":"frame","value":{"intent":"UNKNOWN","entity":null,"slots":{},"branch":null,"predicate":"UNKNOWN()"}}},{"type":"visit","from":"pipeline","to":"dialogue","fn":"DialogueContext.resolve","payload":{"kind":"resolved","value":{"intent":"UNKNOWN","entity":null,"slots":{},"branch":null,"predicate":"UNKNOWN()","trace":null}}},{"type":"visit","from":"pipeline","to":"query","fn":"QueryEngine.execute","payload":{"kind":"result","value":{"query":"NO_QUERY","found":false,"kind":"UNKNOWN","sources":[],"data":null}}},{"type":"visit","from":"pipeline","to":"answer","fn":"AnswerGenerator.generate","payload":{"kind":"answer","value":"Xin lỗi, câu hỏi không thuộc văn phạm hoặc ngoài phạm vi Course Assistant."}},{"type":"visit","from":"pipeline","to":"dialogue","fn":"DialogueContext.update","payload":{"kind":"memory","value":{"last_chapter":"CH11","last_assignment_part":"PART_II","last_lo":"LO4.2","last_entity":"CH11"}}},{"type":"return","from":"pipeline","to":"cli","fn":"CourseAssistant.process","payload":{"kind":"answer","value":"Xin lỗi, câu hỏi không thuộc văn phạm hoặc ngoài phạm vi Course Assistant."}}]},{"sentence":"NLP mấy tín chỉ?","branch":"Q_COURSE_CREDITS","found":true,"kind":"COURSE_CREDITS","answer":"Môn Xử lý Ngôn ngữ Tự nhiên (CO3085) có 3 tín chỉ.","hops":[{"type":"call","from":"cli","to":"pipeline","fn":"CourseAssistant.process","payload":{"kind":"text","value":"NLP mấy tín chỉ?"}},{"type":"call","from":"pipeline","to":"parser","fn":"EarleyParser.parse"},{"type":"visit","from":"parser","to":"tokenizer","fn":"tokenize","payload":{"kind":"tokens","value":["nlp","mấy","tín","chỉ","?"]}},{"type":"burst","from":"parser","targets":{"grammar":{"Grammar.is_nonterminal":259,"Grammar.rules_for":78},"tree":{"Tree.__init__":15}}},{"type":"return","from":"parser","to":"pipeline","fn":"EarleyParser.parse","payload":{"kind":"tree","value":{"accepted":true,"tree":["S",["PREFIX"],["QUESTION",["Q_COURSE_CREDITS",["COURSE_SUBJECT",["COURSE_ENTITY","nlp"]],["CREDIT_VERB"],["CREDIT_QUESTION","mấy","tín","chỉ"]]],["SUFFIX",["END_MARK","?"]]]}}},{"type":"call","from":"pipeline","to":"semantic","fn":"SemanticInterpreter.interpret"},{"type":"visit","from":"semantic","to":"tree","fn":"Tree.first"},{"type":"return","from":"semantic","to":"pipeline","fn":"SemanticInterpreter.interpret","payload":{"kind":"frame","value":{"intent":"GET_COURSE_INFO","entity":"CO3085","slots":{"course":"CO3085","field":"CREDITS"},"branch":"Q_COURSE_CREDITS","predicate":"GET_COURSE_INFO(entity=CO3085, course=CO3085, field=CREDITS)"}}},{"type":"visit","from":"pipeline","to":"dialogue","fn":"DialogueContext.resolve","payload":{"kind":"resolved","value":{"intent":"GET_COURSE_INFO","entity":"CO3085","slots":{"course":"CO3085","field":"CREDITS"},"branch":"Q_COURSE_CREDITS","predicate":"GET_COURSE_INFO(entity=CO3085, course=CO3085, field=CREDITS)","trace":null}}},{"type":"visit","from":"pipeline","to":"query","fn":"QueryEngine.execute","payload":{"kind":"result","value":{"query":"KB.course[CREDITS]","found":true,"kind":"COURSE_CREDITS","sources":["kb/course_info.txt"],"data":{"credits":"3"}}}},{"type":"visit","from":"pipeline","to":"answer","fn":"AnswerGenerator.generate","payload":{"kind":"answer","value":"Môn Xử lý Ngôn ngữ Tự nhiên (CO3085) có 3 tín chỉ."}},{"type":"visit","from":"pipeline","to":"dialogue","fn":"DialogueContext.update","payload":{"kind":"memory","value":{"last_chapter":"CH04","last_assignment_part":"PART_I","last_lo":"LO4.2","last_entity":"CO3085"}}},{"type":"return","from":"pipeline","to":"cli","fn":"CourseAssistant.process","payload":{"kind":"answer","value":"Môn Xử lý Ngôn ngữ Tự nhiên (CO3085) có 3 tín chỉ."}}]},{"sentence":"Có giáo trình nào về CFG không?","branch":"Q_RESOURCE","found":true,"kind":"RESOURCE","answer":"Tài liệu phù hợp: Speech and Language Processing.","hops":[{"type":"call","from":"cli","to":"pipeline","fn":"CourseAssistant.process","payload":{"kind":"text","value":"Có giáo trình nào về CFG không?"}},{"type":"call","from":"pipeline","to":"parser","fn":"EarleyParser.parse"},{"type":"visit","from":"parser","to":"tokenizer","fn":"tokenize","payload":{"kind":"tokens","value":["có","giáo","trình","nào","về","cfg","không","?"]}},{"type":"burst","from":"parser","targets":{"grammar":{"Grammar.is_nonterminal":261,"Grammar.rules_for":77},"tree":{"Tree.__init__":14}}},{"type":"return","from":"parser","to":"pipeline","fn":"EarleyParser.parse","payload":{"kind":"tree","value":{"accepted":true,"tree":["S",["PREFIX"],["QUESTION",["Q_RESOURCE","có",["RESOURCE_NOUN","giáo","trình"],"nào","về",["RESOURCE_TOPIC","cfg"],["YES_NO","không"]]],["SUFFIX",["END_MARK","?"]]]}}},{"type":"call","from":"pipeline","to":"semantic","fn":"SemanticInterpreter.interpret"},{"type":"burst","from":"semantic","targets":{"tree":{"Tree.first":2,"Tree.leaves":1}}},{"type":"call","from":"semantic","to":"entities","fn":"EntityLexicon.resolve_resource_topic"},{"type":"visit","from":"entities","to":"tokenizer","fn":"normalized_phrase"},{"type":"return","from":"entities","to":"semantic","fn":"EntityLexicon.resolve_resource_topic","payload":{"kind":"id","value":"CFG"}},{"type":"return","from":"semantic","to":"pipeline","fn":"SemanticInterpreter.interpret","payload":{"kind":"frame","value":{"intent":"GET_RESOURCE","entity":"CFG","slots":{"topic":"CFG"},"branch":"Q_RESOURCE","predicate":"GET_RESOURCE(entity=CFG, topic=CFG)"}}},{"type":"visit","from":"pipeline","to":"dialogue","fn":"DialogueContext.resolve","payload":{"kind":"resolved","value":{"intent":"GET_RESOURCE","entity":"CFG","slots":{"topic":"CFG"},"branch":"Q_RESOURCE","predicate":"GET_RESOURCE(entity=CFG, topic=CFG)","trace":null}}},{"type":"call","from":"pipeline","to":"query","fn":"QueryEngine.execute"},{"type":"burst","from":"query","targets":{"tokenizer":{"normalize_text":16}}},{"type":"return","from":"query","to":"pipeline","fn":"QueryEngine.execute","payload":{"kind":"result","value":{"query":"KB.resources.search(CFG)","found":true,"kind":"RESOURCE","sources":["kb/resources.txt"],"data":[{"title":"Speech and Language Processing","authors":"Daniel Jurafsky; James H. Martin","year":"2019","usage":"broad NLP reference","resource_id":"REFERENCE_3","kind":"REFERENCE"}]}}},{"type":"visit","from":"pipeline","to":"answer","fn":"AnswerGenerator.generate","payload":{"kind":"answer","value":"Tài liệu phù hợp: Speech and Language Processing."}},{"type":"visit","from":"pipeline","to":"dialogue","fn":"DialogueContext.update","payload":{"kind":"memory","value":{"last_chapter":"CH03","last_assignment_part":"PART_I","last_lo":"LO3.1","last_entity":"CFG"}}},{"type":"return","from":"pipeline","to":"cli","fn":"CourseAssistant.process","payload":{"kind":"answer","value":"Tài liệu phù hợp: Speech and Language Processing."}}]},{"sentence":"Bao giờ phải nộp bài tập lớn?","branch":"Q_DEADLINE","found":true,"kind":"DEADLINE","answer":"Các mốc BTL trong dữ liệu mẫu là tuần 8: BTL checkpoint 1 - grammar and parser; tuần 12: BTL checkpoint 2 - semantic interpretation and QA; tuần 15: BTL final submission and demo.","hops":[{"type":"call","from":"cli","to":"pipeline","fn":"CourseAssistant.process","payload":{"kind":"text","value":"Bao giờ phải nộp bài tập lớn?"}},{"type":"call","from":"pipeline","to":"parser","fn":"EarleyParser.parse"},{"type":"visit","from":"parser","to":"tokenizer","fn":"tokenize","payload":{"kind":"tokens","value":["bao","giờ","phải","nộp","bài","tập","lớn","?"]}},{"type":"burst","from":"parser","targets":{"grammar":{"Grammar.is_nonterminal":254,"Grammar.rules_for":76},"tree":{"Tree.__init__":14}}},{"type":"return","from":"parser","to":"pipeline","fn":"EarleyParser.parse","payload":{"kind":"tree","value":{"accepted":true,"tree":["S",["PREFIX"],["QUESTION",["Q_DEADLINE",["WHEN_Q","bao","giờ"],["SUBMIT_ACTION","phải","nộp"],["ASSIGNMENT_ENTITY","bài","tập","lớn"]]],["SUFFIX",["END_MARK","?"]]]}}},{"type":"call","from":"pipeline","to":"semantic","fn":"SemanticInterpreter.interpret"},{"type":"visit","from":"semantic","to":"tree","fn":"Tree.first"},{"type":"return","from":"semantic","to":"pipeline","fn":"SemanticInterpreter.interpret","payload":{"kind":"frame","value":{"intent":"GET_DEADLINE","entity":"BTL01","slots":{"assignment":"BTL01"},"branch":"Q_DEADLINE","predicate":"GET_DEADLINE(entity=BTL01, assignment=BTL01)"}}},{"type":"visit","from":"pipeline","to":"dialogue","fn":"DialogueContext.resolve","payload":{"kind":"resolved","value":{"intent":"GET_DEADLINE","entity":"BTL01","slots":{"assignment":"BTL01"},"branch":"Q_DEADLINE","predicate":"GET_DEADLINE(entity=BTL01, assignment=BTL01)","trace":null}}},{"type":"visit","from":"pipeline","to":"query","fn":"QueryEngine.execute","payload":{"kind":"result","value":{"query":"KB.weeks[*].milestone","found":true,"kind":"DEADLINE","sources":["kb/schedule.txt"],"data":[{"week_id":"WEEK_08","milestone":"BTL checkpoint 1 - grammar and parser"},{"week_id":"WEEK_12","milestone":"BTL checkpoint 2 - semantic interpretation and QA"},{"week_id":"WEEK_15","milestone":"BTL final submission and demo"}]}}},{"type":"visit","from":"pipeline","to":"answer","fn":"AnswerGenerator.generate","payload":{"kind":"answer","value":"Các mốc BTL trong dữ liệu mẫu là tuần 8: BTL checkpoint 1 - grammar and parser; tuần 12: BTL checkpoint 2 - semantic interpretation and QA; tuần 15: BTL final submission and demo."}},{"type":"visit","from":"pipeline","to":"dialogue","fn":"DialogueContext.update","payload":{"kind":"memory","value":{"last_chapter":"CH03","last_assignment_part":"PART_I","last_lo":"LO3.1","last_entity":"BTL01"}}},{"type":"return","from":"pipeline","to":"cli","fn":"CourseAssistant.process","payload":{"kind":"answer","value":"Các mốc BTL trong dữ liệu mẫu là tuần 8: BTL checkpoint 1 - grammar and parser; tuần 12: BTL checkpoint 2 - semantic interpretation and QA; tuần 15: BTL final submission and demo."}}]},{"sentence":"Phần I của bài tập lớn là gì?","branch":"Q_ASSIGNMENT_PART","found":true,"kind":"ASSIGNMENT_SECTION","answer":"Phần I — Grammar and Parser: xây dựng grammar cho miền Course Assistant, sinh câu hợp lệ từ grammar, xây dựng parser, xuất parse tree, xử lý câu không hợp lệ.","hops":[{"type":"call","from":"cli","to":"pipeline","fn":"CourseAssistant.process","payload":{"kind":"text","value":"Phần I của bài tập lớn là gì?"}},{"type":"call","from":"pipeline","to":"parser","fn":"EarleyParser.parse"},{"type":"visit","from":"parser","to":"tokenizer","fn":"tokenize","payload":{"kind":"tokens","value":["phần","i","của","bài","tập","lớn","là","gì","?"]}},{"type":"burst","from":"parser","targets":{"grammar":{"Grammar.is_nonterminal":319,"Grammar.rules_for":80},"tree":{"Tree.__init__":15}}},{"type":"return","from":"parser","to":"pipeline","fn":"EarleyParser.parse","payload":{"kind":"tree","value":{"accepted":true,"tree":["S",["PREFIX"],["QUESTION",["Q_ASSIGNMENT_PART",["ASSIGNMENT_PART","phần",["ROMAN_NUMBER","i"]],"của",["ASSIGNMENT_ENTITY","bài","tập","lớn"],"là","gì"]],["SUFFIX",["END_MARK","?"]]]}}},{"type":"call","from":"pipeline","to":"semantic","fn":"SemanticInterpreter.interpret"},{"type":"burst","from":"semantic","targets":{"tree":{"Tree.first":2,"Tree.leaves":1}}},{"type":"call","from":"semantic","to":"entities","fn":"EntityLexicon.resolve_assignment_part"},{"type":"visit","from":"entities","to":"tokenizer","fn":"normalized_phrase"},{"type":"return","from":"entities","to":"semantic","fn":"EntityLexicon.resolve_assignment_part","payload":{"kind":"id","value":"PART_I"}},{"type":"return","from":"semantic","to":"pipeline","fn":"SemanticInterpreter.interpret","payload":{"kind":"frame","value":{"intent":"GET_ASSIGNMENT","entity":"PART_I","slots":{"assignment":"BTL01","section":"PART_I"},"branch":"Q_ASSIGNMENT_PART","predicate":"GET_ASSIGNMENT(entity=PART_I, assignment=BTL01, section=PART_I)"}}},{"type":"visit","from":"pipeline","to":"dialogue","fn":"DialogueContext.resolve","payload":{"kind":"resolved","value":{"intent":"GET_ASSIGNMENT","entity":"PART_I","slots":{"assignment":"BTL01","section":"PART_I"},"branch":"Q_ASSIGNMENT_PART","predicate":"GET_ASSIGNMENT(entity=PART_I, assignment=BTL01, section=PART_I)","trace":null}}},{"type":"visit","from":"pipeline","to":"query","fn":"QueryEngine.execute","payload":{"kind":"result","value":{"query":"KB.assignment.sections[PART_I]","found":true,"kind":"ASSIGNMENT_SECTION","sources":["kb/assignments.txt"],"data":{"section":{"requirements":["xây dựng grammar cho miền Course Assistant","sinh câu hợp lệ từ grammar","xây dựng parser","xuất parse tree","xử lý câu không hợp lệ"],"suggested_outputs":["output/grammar.txt","output/samples.txt","output/parse-results.txt"],"section_id":"PART_I","title":"Grammar and Parser"},"field":null,"feature":null}}}},{"type":"visit","from":"pipeline","to":"answer","fn":"AnswerGenerator.generate","payload":{"kind":"answer","value":"Phần I — Grammar and Parser: xây dựng grammar cho miền Course Assistant, sinh câu hợp lệ từ grammar, xây dựng parser, xuất parse tree, xử lý câu không hợp lệ."}},{"type":"visit","from":"pipeline","to":"dialogue","fn":"DialogueContext.update","payload":{"kind":"memory","value":{"last_chapter":"CH10","last_assignment_part":"PART_I","last_lo":"LO4.2","last_entity":"PART_I"}}},{"type":"return","from":"pipeline","to":"cli","fn":"CourseAssistant.process","payload":{"kind":"answer","value":"Phần I — Grammar and Parser: xây dựng grammar cho miền Course Assistant, sinh câu hợp lệ từ grammar, xây dựng parser, xuất parse tree, xử lý câu không hợp lệ."}}]},{"sentence":"Phần đó cần nộp những gì?","branch":"Q_CONTEXT_ASSIGNMENT_OUTPUT","found":true,"kind":"ASSIGNMENT_SECTION","answer":"Phần I có các output: output/grammar.txt, output/samples.txt, output/parse-results.txt.","hops":[{"type":"call","from":"cli","to":"pipeline","fn":"CourseAssistant.process","payload":{"kind":"text","value":"Phần đó cần nộp những gì?"}},{"type":"call","from":"pipeline","to":"parser","fn":"EarleyParser.parse"},{"type":"visit","from":"parser","to":"tokenizer","fn":"tokenize","payload":{"kind":"tokens","value":["phần","đó","cần","nộp","những","gì","?"]}},{"type":"burst","from":"parser","targets":{"grammar":{"Grammar.is_nonterminal":308,"Grammar.rules_for":78},"tree":{"Tree.__init__":14}}},{"type":"return","from":"parser","to":"pipeline","fn":"EarleyParser.parse","payload":{"kind":"tree","value":{"accepted":true,"tree":["S",["PREFIX"],["QUESTION",["Q_CONTEXT_ASSIGNMENT_OUTPUT",["CONTEXT_PART","phần","đó"],["OUTPUT_QUESTION","cần","nộp","những","gì"]]],["SUFFIX",["END_MARK","?"]]]}}},{"type":"call","from":"pipeline","to":"semantic","fn":"SemanticInterpreter.interpret"},{"type":"visit","from":"semantic","to":"tree","fn":"Tree.first"},{"type":"return","from":"semantic","to":"pipeline","fn":"SemanticInterpreter.interpret","payload":{"kind":"frame","value":{"intent":"CONTEXT_DEPENDENT","entity":null,"slots":{"action":"ASSIGNMENT_OUTPUT"},"branch":"Q_CONTEXT_ASSIGNMENT_OUTPUT","predicate":"CONTEXT_DEPENDENT(action=ASSIGNMENT_OUTPUT)"}}},{"type":"call","from":"pipeline","to":"dialogue","fn":"DialogueContext.resolve"},{"type":"visit","from":"dialogue","to":"semantic","fn":"SemanticFrame.__init__"},{"type":"return","from":"dialogue","to":"pipeline","fn":"DialogueContext.resolve","payload":{"kind":"resolved","value":{"intent":"GET_ASSIGNMENT","entity":"PART_I","slots":{"assignment":"BTL01","section":"PART_I","field":"OUTPUTS"},"branch":"Q_CONTEXT_ASSIGNMENT_OUTPUT","predicate":"GET_ASSIGNMENT(entity=PART_I, assignment=BTL01, section=PART_I, field=OUTPUTS)","trace":"phần BTL gần nhất → PART_I"}}},{"type":"visit","from":"pipeline","to":"query","fn":"QueryEngine.execute","payload":{"kind":"result","value":{"query":"KB.assignment.sections[PART_I]","found":true,"kind":"ASSIGNMENT_SECTION","sources":["kb/assignments.txt"],"data":{"section":{"requirements":["xây dựng grammar cho miền Course Assistant","sinh câu hợp lệ từ grammar","xây dựng parser","xuất parse tree","xử lý câu không hợp lệ"],"suggested_outputs":["output/grammar.txt","output/samples.txt","output/parse-results.txt"],"section_id":"PART_I","title":"Grammar and Parser"},"field":"OUTPUTS","feature":null}}}},{"type":"visit","from":"pipeline","to":"answer","fn":"AnswerGenerator.generate","payload":{"kind":"answer","value":"Phần I có các output: output/grammar.txt, output/samples.txt, output/parse-results.txt."}},{"type":"visit","from":"pipeline","to":"dialogue","fn":"DialogueContext.update","payload":{"kind":"memory","value":{"last_chapter":"CH04","last_assignment_part":"PART_I","last_lo":"LO3.1","last_entity":"PART_I"}}},{"type":"return","from":"pipeline","to":"cli","fn":"CourseAssistant.process","payload":{"kind":"answer","value":"Phần I có các output: output/grammar.txt, output/samples.txt, output/parse-results.txt."}}]},{"sentence":"L.O.2.5 là gì?","branch":"Q_LO","found":true,"kind":"LEARNING_OUTCOME","answer":"LO2.5: Kiến thức xác suất để giải quyết nhập nhằng từ ở mức câu.","hops":[{"type":"call","from":"cli","to":"pipeline","fn":"CourseAssistant.process","payload":{"kind":"text","value":"L.O.2.5 là gì?"}},{"type":"call","from":"pipeline","to":"parser","fn":"EarleyParser.parse"},{"type":"visit","from":"parser","to":"tokenizer","fn":"tokenize","payload":{"kind":"tokens","value":["lo2.5","là","gì","?"]}},{"type":"burst","from":"parser","targets":{"grammar":{"Grammar.is_nonterminal":243,"Grammar.rules_for":75},"tree":{"Tree.__init__":13}}},{"type":"return","from":"parser","to":"pipeline","fn":"EarleyParser.parse","payload":{"kind":"tree","value":{"accepted":true,"tree":["S",["PREFIX"],["QUESTION",["Q_LO",["LO_ENTITY","lo2.5"],["LO_QUESTION","là","gì"]]],["SUFFIX",["END_MARK","?"]]]}}},{"type":"call","from":"pipeline","to":"semantic","fn":"SemanticInterpreter.interpret"},{"type":"burst","from":"semantic","targets":{"tree":{"Tree.first":2,"Tree.leaves":1}}},{"type":"call","from":"semantic","to":"entities","fn":"EntityLexicon.resolve_lo"},{"type":"visit","from":"entities","to":"tokenizer","fn":"normalized_phrase"},{"type":"return","from":"entities","to":"semantic","fn":"EntityLexicon.resolve_lo","payload":{"kind":"id","value":"LO2.5"}},{"type":"return","from":"semantic","to":"pipeline","fn":"SemanticInterpreter.interpret","payload":{"kind":"frame","value":{"intent":"GET_LO","entity":"LO2.5","slots":{"lo":"LO2.5"},"branch":"Q_LO","predicate":"GET_LO(entity=LO2.5, lo=LO2.5)"}}},{"type":"visit","from":"pipeline","to":"dialogue","fn":"DialogueContext.resolve","payload":{"kind":"resolved","value":{"intent":"GET_LO","entity":"LO2.5","slots":{"lo":"LO2.5"},"branch":"Q_LO","predicate":"GET_LO(entity=LO2.5, lo=LO2.5)","trace":null}}},{"type":"visit","from":"pipeline","to":"query","fn":"QueryEngine.execute","payload":{"kind":"result","value":{"query":"KB.learning_outcomes[LO2.5]","found":true,"kind":"LEARNING_OUTCOME","sources":["kb/course_info.txt"],"data":{"lo":"LO2.5","description":"Kiến thức xác suất để giải quyết nhập nhằng từ ở mức câu."}}}},{"type":"visit","from":"pipeline","to":"answer","fn":"AnswerGenerator.generate","payload":{"kind":"answer","value":"LO2.5: Kiến thức xác suất để giải quyết nhập nhằng từ ở mức câu."}},{"type":"visit","from":"pipeline","to":"dialogue","fn":"DialogueContext.update","payload":{"kind":"memory","value":{"last_chapter":"CH10","last_assignment_part":null,"last_lo":"LO2.5","last_entity":"LO2.5"}}},{"type":"return","from":"pipeline","to":"cli","fn":"CourseAssistant.process","payload":{"kind":"answer","value":"LO2.5: Kiến thức xác suất để giải quyết nhập nhằng từ ở mức câu."}}]},{"sentence":"Nó nằm ở chương nào?","branch":"Q_CONTEXT_LO_CHAPTER","found":true,"kind":"LO_CHAPTER","answer":"LO2.5 tương ứng với Chương 6 — AMBIGUITY RESOLUTION - STATISTICAL METHODS.","hops":[{"type":"call","from":"cli","to":"pipeline","fn":"CourseAssistant.process","payload":{"kind":"text","value":"Nó nằm ở chương nào?"}},{"type":"call","from":"pipeline","to":"parser","fn":"EarleyParser.parse"},{"type":"visit","from":"parser","to":"tokenizer","fn":"tokenize","payload":{"kind":"tokens","value":["nó","nằm","ở","chương","nào","?"]}},{"type":"burst","from":"parser","targets":{"grammar":{"Grammar.is_nonterminal":247,"Grammar.rules_for":75},"tree":{"Tree.__init__":12}}},{"type":"return","from":"parser","to":"pipeline","fn":"EarleyParser.parse","payload":{"kind":"tree","value":{"accepted":true,"tree":["S",["PREFIX"],["QUESTION",["Q_CONTEXT_LO_CHAPTER","nó","nằm","ở","chương","nào"]],["SUFFIX",["END_MARK","?"]]]}}},{"type":"call","from":"pipeline","to":"semantic","fn":"SemanticInterpreter.interpret"},{"type":"visit","from":"semantic","to":"tree","fn":"Tree.first"},{"type":"return","from":"semantic","to":"pipeline","fn":"SemanticInterpreter.interpret","payload":{"kind":"frame","value":{"intent":"CONTEXT_DEPENDENT","entity":null,"slots":{"action":"LO_CHAPTER"},"branch":"Q_CONTEXT_LO_CHAPTER","predicate":"CONTEXT_DEPENDENT(action=LO_CHAPTER)"}}},{"type":"call","from":"pipeline","to":"dialogue","fn":"DialogueContext.resolve"},{"type":"visit","from":"dialogue","to":"semantic","fn":"SemanticFrame.__init__"},{"type":"return","from":"dialogue","to":"pipeline","fn":"DialogueContext.resolve","payload":{"kind":"resolved","value":{"intent":"GET_TOPIC","entity":"LO2.5","slots":{"lo":"LO2.5"},"branch":"Q_CONTEXT_LO_CHAPTER","predicate":"GET_TOPIC(entity=LO2.5, lo=LO2.5)","trace":"learning outcome gần nhất → LO2.5"}}},{"type":"visit","from":"pipeline","to":"query","fn":"QueryEngine.execute","payload":{"kind":"result","value":{"query":"KB.lo_chapter[LO2.5]","found":true,"kind":"LO_CHAPTER","sources":["kb/course_info.txt","kb/topics.txt"],"data":{"lo":"LO2.5","chapter":{"chapter_id":"CH06","part":"Syntactic Processing","keywords":"probability, POS tagging, lexical probability, PCFG, best-first","summary":"Statistical methods are introduced for resolving ambiguity at sentence level. Topics include probability theory, probability estimation, part-of-speech tagging…","subtopics":["6.1 Basic probability theory","6.2 Estimating probabilities","6.3 Part-of-speech tagging","6.4 Lexical probabilities","6.5 Probabilistic context-free grammar","6.6 Best-first parsing","+1"],"chapter_number":6,"title":"AMBIGUITY RESOLUTION - STATISTICAL METHODS","keyword_list":["probability","POS tagging","lexical probability","PCFG","best-first"]}}}}},{"type":"visit","from":"pipeline","to":"answer","fn":"AnswerGenerator.generate","payload":{"kind":"answer","value":"LO2.5 tương ứng với Chương 6 — AMBIGUITY RESOLUTION - STATISTICAL METHODS."}},{"type":"visit","from":"pipeline","to":"dialogue","fn":"DialogueContext.update","payload":{"kind":"memory","value":{"last_chapter":"CH04","last_assignment_part":"PART_I","last_lo":"LO2.5","last_entity":"LO2.5"}}},{"type":"return","from":"pipeline","to":"cli","fn":"CourseAssistant.process","payload":{"kind":"answer","value":"LO2.5 tương ứng với Chương 6 — AMBIGUITY RESOLUTION - STATISTICAL METHODS."}}]}]};
+</script>
+<script>
+"use strict";
+const T = window.TRACE;
+if (!T) document.body.classList.add("empty");
+
+const $ = (s) => document.querySelector(s);
+const el = (tag, cls, text) => {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (text != null) n.textContent = text;
+  return n;
+};
+
+/* ── data ─────────────────────────────────────────────────── */
+const MOD = T ? T.modules : {};
+const ROOT = T ? T.root : "run";
+const J = T ? T.journeys : [];
+const names = Object.keys(MOD);
+const kids = (n) => names.filter((k) => MOD[k].parent === n).sort((a, b) => MOD[a].order - MOD[b].order);
+const desc = (n) => kids(n).reduce((s, k) => s + 1 + desc(k), 0);
+const isContainer = (n) => kids(n).length > 0;
+
+const KIND = {
+  text:     { c: "#ffffff", t: "TEXT" },
+  tokens:   { c: "#22d3ee", t: "TOKENS" },
+  tree:     { c: "#4ade80", t: "PARSE TREE" },
+  frame:    { c: "#a78bfa", t: "SEMANTIC FRAME" },
+  resolved: { c: "#e879f9", t: "CONTEXT RESOLVED" },
+  result:   { c: "#fbbf24", t: "QUERY RESULT" },
+  answer:   { c: "#f472b6", t: "ANSWER" },
+  id:       { c: "#a3e635", t: "ENTITY ID" },
+  memory:   { c: "#2dd4bf", t: "DIALOGUE MEMORY" },
+};
+const CHAIN = ["text", "tokens", "tree", "frame", "resolved", "result", "answer"];
+const PALETTE = ["#60a5fa", "#38bdf8", "#22d3ee", "#34d399", "#4ade80", "#a3e635", "#a78bfa",
+                 "#e879f9", "#fb923c", "#f472b6", "#2dd4bf", "#facc15", "#818cf8", "#f87171",
+                 "#94a3b8", "#c084fc", "#fda4af", "#5eead4"];
+const COLOR = {};
+names.slice().sort((a, b) => MOD[a].order - MOD[b].order).forEach((n, i) => { COLOR[n] = PALETTE[i % PALETTE.length]; });
+COLOR[ROOT] = "#7c8db8";
+if (COLOR.cli) COLOR.cli = "#93a7d8";
+
+/* ── layout: nested boxes ─────────────────────────────────── */
+const PAD = 12, HEAD = 32, GAP = 12;
+let R = {};
+const DOM = {};
+
+function place(n, r) {
+  R[n] = r;
+  const ks = kids(n);
+  if (!ks.length) return;
+  const inner = { x: r.x + PAD, y: r.y + HEAD, w: r.w - 2 * PAD, h: r.h - HEAD - PAD };
+  let flow = ks.filter((k) => MOD[k].order < 1000);
+  const idle = ks.filter((k) => MOD[k].order >= 1000);
+  if (idle.length && flow.length) {
+    const sh = Math.max(46, Math.min(66, inner.h * 0.16));
+    lineUp(idle, { x: inner.x, y: inner.y + inner.h - sh, w: inner.w, h: sh });
+    grid(flow, { x: inner.x, y: inner.y, w: inner.w, h: inner.h - sh - GAP });
+  } else {
+    grid(flow.length ? flow : idle, inner);
+  }
+}
+function lineUp(list, r) {
+  const w = (r.w - GAP * (list.length - 1)) / list.length;
+  list.forEach((k, i) => place(k, { x: r.x + i * (w + GAP), y: r.y, w, h: r.h }));
+}
+function grid(list, r) {
+  const wt = (k) => 1 + 1.5 * desc(k);
+  const total = list.reduce((s, k) => s + wt(k), 0);
+  let rows = 1, best = Infinity;
+  for (let n = 1; n <= list.length; n++) {
+    const score = Math.abs(Math.log((r.w / (list.length / n)) / (r.h / n) / 1.6));
+    if (score < best) { best = score; rows = n; }
+  }
+  const target = total / rows, out = [];
+  let cur = [], acc = 0;
+  list.forEach((k, i) => {
+    const rowsLeft = rows - out.length - 1;
+    if (cur.length && rowsLeft > 0 && list.length - i >= rowsLeft && acc + wt(k) - target > target - acc) {
+      out.push(cur); cur = []; acc = 0;
+    }
+    cur.push(k); acc += wt(k);
+  });
+  if (cur.length) out.push(cur);
+  const rh = out.map((row) => Math.sqrt(Math.max(...row.map(wt))));
+  const sumH = rh.reduce((a, b) => a + b, 0);
+  const availH = r.h - GAP * (out.length - 1);
+  let y = r.y;
+  out.forEach((row, ri) => {
+    const h = availH * rh[ri] / sumH;
+    const sw = row.reduce((s, k) => s + wt(k), 0);
+    const availW = r.w - GAP * (row.length - 1);
+    let x = r.x;
+    row.forEach((k) => { const w = availW * wt(k) / sw; place(k, { x, y, w, h }); x += w + GAP; });
+    y += h + GAP;
+  });
+}
+
+function depth(n) { let d = 0; while (MOD[n] && MOD[n].parent) { n = MOD[n].parent; d++; } return d; }
+
+function build() {
+  const host = $("#boxes");
+  host.textContent = "";
+  for (const n of names) {
+    const m = MOD[n];
+    const box = el("div", "box");
+    box.style.setProperty("--c", COLOR[n]);
+    box.style.zIndex = 10 + depth(n);
+    if (isContainer(n)) box.classList.add("container");
+    if (m.order >= 1000) box.classList.add("idle");
+    const head = el("div", "head");
+    if (isContainer(n)) head.append(el("span", "core"));
+    head.append(el("span", "name", n + ".py"));
+    const what = m.classes[0] || m.functions[0] || "";
+    head.append(el("span", "meta", `${m.lines} dòng${what ? " · " + what : ""}`));
+    head.append(el("span", "grow"));
+    const hits = el("span", "hits", "0");
+    head.append(hits);
+    box.append(head);
+    const body = el("div", "body");
+    box.append(body);
+    host.append(box);
+    DOM[n] = { box, hits, body, count: 0 };
+  }
+  widgets();
+}
+
+function positions() {
+  const vp = $("#viewport");
+  const W = vp.clientWidth, H = vp.clientHeight;
+  const loose = names.filter((k) => !MOD[k].parent && k !== ROOT);
+  const side = loose.length ? 150 : 0;
+  R = {};
+  place(ROOT, { x: 14, y: 14, w: W - 28 - side, h: H - 28 });
+  loose.forEach((k, i) => { R[k] = { x: W - side, y: 14 + i * 92, w: side - 14, h: 78 }; });
+  for (const n of names) {
+    const r = R[n], s = DOM[n].box.style;
+    if (!r) { s.display = "none"; continue; }
+    s.left = r.x + "px"; s.top = r.y + "px"; s.width = r.w + "px"; s.height = r.h + "px";
+  }
+  for (const c of [bg, fx]) {
+    c.width = W * DPR; c.height = H * DPR;
+    c.getContext("2d").setTransform(DPR, 0, 0, DPR, 0, 0);
+  }
+}
+const anchor = (n) => {
+  const r = R[n];
+  if (!r) return { x: 0, y: 0 };
+  return isContainer(n) ? { x: r.x + 17, y: r.y + 15 } : { x: r.x + r.w / 2, y: r.y + r.h / 2 + 6 };
+};
+
+/* ── per-module widgets ───────────────────────────────────── */
+const W = {};
+function widgets() {
+  if (DOM.grammar) {
+    W.grammar = el("div", "big", "0"); DOM.grammar.body.append(W.grammar, el("div", "small", "lời gọi rules_for / is_nonterminal"));
+  }
+  if (DOM.tree) {
+    W.tree = el("div", "big", "0"); DOM.tree.body.append(W.tree, el("div", "small", "node Tree tạo / đọc"));
+  }
+  if (DOM.tokenizer) { W.tokens = el("div", "row"); W.tokens.style.cssText = "display:flex;flex-wrap:wrap;gap:4px"; DOM.tokenizer.body.append(W.tokens); }
+  if (DOM.entities) { W.entity = el("div", "big", "·"); DOM.entities.body.append(W.entity); }
+  if (DOM.dialogue) {
+    W.slots = {};
+    for (const [key, label] of [["last_chapter", "chương"], ["last_assignment_part", "phần"], ["last_lo", "LO"]]) {
+      const s = el("div", "slot", label); const b = el("b", null, "—"); s.append(b);
+      W.slots[key] = { s, b }; DOM.dialogue.body.append(s);
+    }
+  }
+  if (DOM.query) { W.query = el("div", "small", ""); W.query.style.cssText = "font-size:11px;color:#ffe7a3"; W.verdict = el("div", "big", "·"); DOM.query.body.append(W.verdict, W.query); }
+  if (DOM.answer) { W.answer = el("div", "big", "·"); DOM.answer.body.append(W.answer); }
+  if (DOM.kb) {
+    W.files = {};
+    const files = [...new Set(J.flatMap((j) => j.hops.flatMap((h) => (h.payload && h.payload.kind === "result" ? h.payload.value.sources : []))))].sort();
+    for (const f of files) { const p = el("span", "pill file", f.replace("kb/", "")); W.files[f] = p; DOM.kb.body.append(p); }
+  }
+}
+function setTokens(tokens) {
+  if (!W.tokens) return;
+  W.tokens.textContent = "";
+  tokens.forEach((t, i) => { const c = el("span", "tok", t); c.style.animationDelay = i * 45 + "ms"; W.tokens.append(c); });
+}
+function setMemory(mem, used) {
+  if (!W.slots) return;
+  for (const [key, v] of Object.entries(W.slots)) {
+    const val = mem ? mem[key] : null;
+    v.b.textContent = val || "—";
+    v.s.classList.toggle("set", !!val);
+  }
+  if (used && W.slots[used]) { const s = W.slots[used].s; s.classList.remove("used"); void s.offsetWidth; s.classList.add("used"); }
+}
+let counts = {};
+function bumpCounter(n, by) {
+  counts[n] = (counts[n] || 0) + by;
+  const w = n === "grammar" ? W.grammar : n === "tree" ? W.tree : null;
+  if (w) w.textContent = Math.round(counts[n]).toLocaleString("vi-VN");
+}
+
+/* ── canvases ─────────────────────────────────────────────── */
+const DPR = Math.min(window.devicePixelRatio || 1, 2);
+const bg = $("#bg"), fx = $("#fx");
+const bctx = bg.getContext("2d"), ctx = fx.getContext("2d");
+
+let speed = 1, paused = false, sim = 0, last = performance.now();
+const SPEEDS = [0.5, 1, 2, 4];
+const waits = [], flights = [], sparks = [], rings = [], beams = [];
+const sleep = (ms) => new Promise((res) => waits.push({ t: sim + ms, res }));
+
+function fly(a, b, color, { dur = 600, size = 7, arc = 0.22 } = {}) {
+  return new Promise((res) => {
+    const dx = b.x - a.x, dy = b.y - a.y, len = Math.hypot(dx, dy) || 1;
+    const bend = (Math.random() < 0.5 ? -1 : 1) * arc * Math.min(len, 600);
+    flights.push({ a, b, c: { x: (a.x + b.x) / 2 - dy / len * bend, y: (a.y + b.y) / 2 + dx / len * bend },
+      t0: sim, dur, color, size, res, prev: null });
+  });
+}
+function burstSparks(p, color, n = 16, power = 1) {
+  for (let i = 0; i < n; i++) {
+    const a = Math.random() * Math.PI * 2, v = (0.05 + Math.random() * 0.22) * power;
+    sparks.push({ x: p.x, y: p.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 0, max: 380 + Math.random() * 420, color });
+  }
+}
+function ring(p, color, max = 70) { rings.push({ x: p.x, y: p.y, t0: sim, max, color }); }
+
+const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+function bez(f, t) {
+  const u = 1 - t;
+  return { x: u * u * f.a.x + 2 * u * t * f.c.x + t * t * f.b.x, y: u * u * f.a.y + 2 * u * t * f.c.y + t * t * f.b.y };
+}
+function glow(c, x, y, r, color, alpha = 1) {
+  const g = c.createRadialGradient(x, y, 0, x, y, r);
+  g.addColorStop(0, color); g.addColorStop(0.35, color + "88"); g.addColorStop(1, color + "00");
+  c.globalAlpha = alpha; c.fillStyle = g; c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.fill(); c.globalAlpha = 1;
+}
+
+function frame(now) {
+  const dt = Math.min(64, now - last); last = now;
+  const step = paused ? 0 : dt * speed;
+  sim += step;
+  for (let i = waits.length - 1; i >= 0; i--) if (sim >= waits[i].t) { const w = waits[i]; waits.splice(i, 1); w.res(); }
+  drawBg(now);
+  const w = fx.width / DPR, h = fx.height / DPR;
+  if (!paused) {
+    ctx.globalCompositeOperation = "destination-out";
+    ctx.fillStyle = `rgba(0,0,0,${Math.min(0.5, 0.11 * dt / 16)})`;
+    ctx.fillRect(0, 0, w, h);
+  }
+  ctx.globalCompositeOperation = "lighter";
+  for (let i = beams.length - 1; i >= 0; i--) {
+    const b = beams[i], t = (sim - b.t0) / b.dur;
+    if (t >= 1) { beams.splice(i, 1); continue; }
+    ctx.strokeStyle = b.color; ctx.globalAlpha = (1 - t) * 0.5; ctx.lineWidth = 2; ctx.setLineDash([6, 8]);
+    ctx.lineDashOffset = -sim / 20;
+    ctx.beginPath(); ctx.moveTo(b.a.x, b.a.y); ctx.lineTo(b.b.x, b.b.y); ctx.stroke();
+    ctx.setLineDash([]); ctx.globalAlpha = 1;
+  }
+  for (let i = flights.length - 1; i >= 0; i--) {
+    const f = flights[i];
+    const t = Math.min(1, (sim - f.t0) / f.dur);
+    const p = bez(f, ease(t));
+    if (f.prev) {
+      ctx.strokeStyle = f.color; ctx.lineWidth = f.size * 0.9; ctx.lineCap = "round"; ctx.globalAlpha = 0.85;
+      ctx.beginPath(); ctx.moveTo(f.prev.x, f.prev.y); ctx.lineTo(p.x, p.y); ctx.stroke(); ctx.globalAlpha = 1;
+    }
+    glow(ctx, p.x, p.y, f.size * 4.2, f.color, 0.9);
+    ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(p.x, p.y, f.size * 0.45, 0, Math.PI * 2); ctx.fill();
+    f.prev = p;
+    if (t >= 1) {
+      flights.splice(i, 1);
+      if (f.size > 4) { burstSparks(f.b, f.color, 14); ring(f.b, f.color); }
+      f.res();
+    }
+  }
+  for (let i = sparks.length - 1; i >= 0; i--) {
+    const s = sparks[i];
+    s.life += step; s.x += s.vx * step; s.y += s.vy * step; s.vx *= 0.985; s.vy *= 0.985;
+    const k = 1 - s.life / s.max;
+    if (k <= 0) { sparks.splice(i, 1); continue; }
+    glow(ctx, s.x, s.y, 5 * k + 1, s.color, k);
+  }
+  for (let i = rings.length - 1; i >= 0; i--) {
+    const r = rings[i], t = (sim - r.t0) / 650;
+    if (t >= 1) { rings.splice(i, 1); continue; }
+    ctx.strokeStyle = r.color; ctx.globalAlpha = (1 - t) * 0.9; ctx.lineWidth = 2.5 * (1 - t) + 0.5;
+    ctx.beginPath(); ctx.arc(r.x, r.y, 6 + r.max * ease(t), 0, Math.PI * 2); ctx.stroke(); ctx.globalAlpha = 1;
+  }
+  ctx.globalCompositeOperation = "source-over";
+  requestAnimationFrame(frame);
+}
+function drawBg(now) {
+  const w = bg.width / DPR, h = bg.height / DPR;
+  bctx.clearRect(0, 0, w, h);
+  const gap = 30, t = now / 1000;
+  for (let x = gap / 2; x < w; x += gap) {
+    for (let y = gap / 2; y < h; y += gap) {
+      const k = 0.5 + 0.5 * Math.sin(t * 0.8 + x * 0.013 + y * 0.021 + Math.sin(x * y * 0.0001));
+      bctx.fillStyle = `rgba(110,140,255,${0.04 + k * 0.1})`;
+      bctx.fillRect(x, y, 1.4, 1.4);
+    }
+  }
+}
+
+/* ── box effects ──────────────────────────────────────────── */
+let active = null;
+function setActive(n) {
+  if (active && DOM[active]) DOM[active].box.classList.remove("active");
+  active = n;
+  if (DOM[n]) DOM[n].box.classList.add("active", "lit");
+}
+function hit(n, by = 1) {
+  const d = DOM[n]; if (!d) return;
+  d.count += by;
+  d.hits.textContent = Math.round(d.count).toLocaleString("vi-VN");
+  d.hits.classList.add("show");
+  d.box.classList.remove("hit"); void d.box.offsetWidth; d.box.classList.add("hit");
+}
+function floatLabel(n, big, small) {
+  const r = R[n]; if (!r) return;
+  const f = el("div", "float", big);
+  f.style.setProperty("--c", COLOR[n]);
+  if (small) f.append(el("small", null, small));
+  f.style.left = r.x + r.w / 2 - 30 + "px"; f.style.top = r.y + 34 + "px";
+  $("#world").append(f);
+  setTimeout(() => f.remove(), 1500);
+}
+function shake() { const w = $("#world"); w.classList.remove("shake"); void w.offsetWidth; w.classList.add("shake"); }
+
+/* ── payload cards ────────────────────────────────────────── */
+let card = null;
+function showCard(payload, n) {
+  hideCard();
+  const k = KIND[payload.kind] || KIND.text;
+  const c = el("div", "card");
+  c.style.setProperty("--k", k.c);
+  c.append(el("div", "tag", "◆ " + k.t));
+  c.append(render(payload));
+  const r = R[n], vp = $("#viewport");
+  const Wd = vp.clientWidth, Ht = vp.clientHeight;
+  let x = r.x + r.w + 14, y = r.y;
+  if (x + 360 > Wd - 8) x = r.x - 374;
+  if (x < 8) x = Math.min(Wd - 368, Math.max(8, r.x + r.w / 2 - 180));
+  y = Math.max(8, Math.min(Ht - 300, y));
+  c.style.left = x + "px"; c.style.top = y + "px";
+  $("#world").append(c);
+  card = c;
+}
+function hideCard() {
+  if (!card) return;
+  const c = card; card = null;
+  c.classList.add("out"); setTimeout(() => c.remove(), 320);
+}
+function kv(k, v) { const p = el("span", "kv"); p.append(el("i", null, k + " "), document.createTextNode(String(v))); return p; }
+
+function render(p) {
+  const v = p.value, box = el("div");
+  if (p.kind === "text") box.append(el("div", "quote", "“" + v + "”"));
+  else if (p.kind === "tokens") {
+    const row = el("div", "row");
+    v.forEach((t, i) => { const c = el("span", "tok", t); c.style.animationDelay = i * 60 + "ms"; row.append(c); });
+    box.append(row);
+  } else if (p.kind === "tree") {
+    if (!v.accepted) box.append(el("div", "reject", "( )"));
+    else box.append(treeSvg(v.tree));
+  } else if (p.kind === "frame" || p.kind === "resolved") {
+    box.append(el("div", "intent", v.intent));
+    const row = el("div", "row"); row.style.marginTop = "8px";
+    if (v.entity) row.append(kv("entity", v.entity));
+    for (const [a, b] of Object.entries(v.slots || {})) row.append(kv(a, Array.isArray(b) ? b.join(", ") : b));
+    if (v.branch) row.append(kv("branch", v.branch));
+    [...row.children].forEach((ch, i) => { ch.style.animationDelay = i * 70 + "ms"; });
+    box.append(row);
+    if (p.kind === "resolved" && v.trace) { const t = el("div", "mono", "⟲ " + v.trace); t.style.marginTop = "8px"; box.append(t); }
+  } else if (p.kind === "result") {
+    const top = el("div", "row"); top.style.alignItems = "center"; top.style.gap = "12px";
+    const verdict = el("div", "verdict", v.found ? "✓" : "✗");
+    verdict.style.color = v.found ? "var(--ok)" : "var(--bad)";
+    verdict.style.textShadow = `0 0 24px ${v.found ? "#4ade80" : "#f87171"}`;
+    top.append(verdict, el("div", "intent", v.kind));
+    box.append(top, el("div", "mono", v.query));
+    const row = el("div", "row"); row.style.marginTop = "8px";
+    v.sources.forEach((s) => row.append(kv("◇", s)));
+    if (v.found && v.data && typeof v.data === "object") {
+      const keys = Array.isArray(v.data) ? [`[${v.data.length} bản ghi]`] : Object.keys(v.data).slice(0, 6);
+      keys.forEach((k) => row.append(kv("·", k)));
+    }
+    box.append(row);
+  } else if (p.kind === "answer") {
+    box.append(el("div", "answer", v));
+  } else if (p.kind === "id") {
+    box.append(el("div", "intent", v == null ? "null" : v));
+  } else if (p.kind === "memory") {
+    const row = el("div", "row");
+    for (const [a, b] of Object.entries(v)) row.append(kv(a.replace("last_", ""), b || "—"));
+    box.append(row);
+  }
+  return box;
+}
+
+function treeSvg(tree) {
+  const NS = "http://www.w3.org/2000/svg";
+  const nodes = [], edges = [];
+  let leafX = 0, maxDepth = 0;
+  (function walk(t, d, parent) {
+    const isLeaf = typeof t === "string";
+    const node = { label: isLeaf ? t : t[0], leaf: isLeaf, d, kids: [] };
+    nodes.push(node);
+    if (parent) edges.push([parent, node]);
+    maxDepth = Math.max(maxDepth, d);
+    if (isLeaf || t.length === 1) { node.x = leafX++; node.empty = !isLeaf; }
+    else {
+      t.slice(1).forEach((c) => node.kids.push(walk(c, d + 1, node)));
+      node.x = (node.kids[0].x + node.kids[node.kids.length - 1].x) / 2;
+    }
+    return node;
+  })(tree, 0, null);
+  const dx = 64, dy = 30, w = Math.max(1, leafX) * dx, h = (maxDepth + 1) * dy + 16;
+  const svg = document.createElementNS(NS, "svg");
+  svg.setAttribute("viewBox", `${-dx / 2} -12 ${w} ${h}`);
+  svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+  const X = (n) => n.x * dx, Y = (n) => n.d * dy;
+  for (const [a, b] of edges) {
+    const line = document.createElementNS(NS, "path");
+    line.setAttribute("d", `M${X(a)},${Y(a) + 5} C${X(a)},${Y(a) + dy / 2} ${X(b)},${Y(b) - dy / 2} ${X(b)},${Y(b) - 7}`);
+    line.setAttribute("fill", "none");
+    line.setAttribute("stroke", b.leaf ? "#22d3ee" : "#4ade80");
+    line.setAttribute("stroke-opacity", b.empty ? ".25" : ".55");
+    line.setAttribute("stroke-width", "1.4");
+    line.style.strokeDasharray = "200"; line.style.strokeDashoffset = "200";
+    line.style.animation = `draw .6s ${b.d * 90}ms forwards`;
+    svg.append(line);
+  }
+  for (const n of nodes) {
+    const t = document.createElementNS(NS, "text");
+    t.setAttribute("x", X(n)); t.setAttribute("y", Y(n) + 4);
+    t.setAttribute("text-anchor", "middle");
+    t.setAttribute("font-family", "Consolas, monospace");
+    t.setAttribute("font-size", n.leaf ? "13" : "9.5");
+    t.setAttribute("font-weight", n.leaf ? "700" : "600");
+    t.setAttribute("fill", n.leaf ? "#a5f3fc" : n.empty ? "#3b4a6b" : n.label.startsWith("Q_") ? "#fbbf24" : "#86efac");
+    t.textContent = n.leaf ? n.label : n.label.length > 14 ? n.label.slice(0, 13) + "…" : n.label;
+    t.style.opacity = "0"; t.style.animation = `fadein .3s ${n.d * 90}ms forwards`;
+    svg.append(t);
+  }
+  return svg;
+}
+const sheet = document.createElement("style");
+sheet.textContent = "@keyframes draw{to{stroke-dashoffset:0}}@keyframes fadein{to{opacity:1}}";
+document.head.append(sheet);
+
+/* ── bottom chain + answer ────────────────────────────────── */
+const LINK = {};
+function buildChain() {
+  const host = $("#chain");
+  CHAIN.forEach((k, i) => {
+    if (i) host.append(el("span", "arrow", "›"));
+    const l = el("div", "link"); l.style.setProperty("--k", KIND[k].c);
+    const v = el("div", "v", "");
+    l.append(el("div", "t", KIND[k].t), v);
+    host.append(l);
+    LINK[k] = { l, v };
+  });
+}
+function chainReset() { for (const k of CHAIN) { LINK[k].l.classList.remove("on"); LINK[k].v.textContent = ""; } }
+function chainSet(p) {
+  const L = LINK[p.kind]; if (!L) return;
+  const v = p.value;
+  const short = {
+    text: () => v,
+    tokens: () => `${v.length} token`,
+    tree: () => (v.accepted ? v.tree[0] + " ✓" : "()"),
+    frame: () => v.intent,
+    resolved: () => v.entity || v.intent,
+    result: () => `${v.found ? "✓" : "✗"} ${v.kind}`,
+    answer: () => v,
+  }[p.kind];
+  L.v.textContent = short ? short() : "";
+  L.l.classList.add("on");
+}
+let typing = 0;
+function typeAnswer(text, cls) {
+  const a = $("#answer");
+  a.className = cls || "";
+  a.textContent = "";
+  const id = ++typing;
+  const span = document.createTextNode(""), cur = el("span", "cursor");
+  a.append(span, cur);
+  let i = 0;
+  (function next() {
+    if (id !== typing) return;
+    i = Math.min(text.length, i + Math.max(1, Math.round(speed * 1.5)));
+    span.textContent = text.slice(0, i);
+    if (i < text.length) setTimeout(next, 18); else setTimeout(() => cur.remove(), 1200);
+  })();
+}
+
+/* ── playback ─────────────────────────────────────────────── */
+let index = 0, run = 0, stream = true;
+const DWELL = { text: 800, tokens: 900, tree: 1500, frame: 1100, resolved: 900, result: 1300, answer: 1100, id: 650, memory: 750 };
+const FALLBACKS = (ans) => /^Xin lỗi/.test(ans);
+
+function memoryBefore(i) {
+  for (let j = i - 1; j >= 0; j--) {
+    const m = J[j].hops.find((h) => h.payload && h.payload.kind === "memory");
+    if (m) return m.payload.value;
+  }
+  return null;
+}
+
+function stepsDots(hops) {
+  const host = $("#steps"); host.textContent = "";
+  hops.forEach((h) => {
+    const d = el("i");
+    const target = h.to || Object.keys(h.targets || {})[0];
+    d.style.setProperty("--c", COLOR[target] || "#889");
+    host.append(d);
+  });
+  return [...host.children];
+}
+
+async function play(i) {
+  const id = ++run;
+  index = (i + J.length) % J.length;
+  const j = J[index];
+  flights.length = 0; waits.splice(0).forEach((w) => w.res());
+  hideCard(); chainReset(); counts = {};
+  bumpCounter("grammar", 0); bumpCounter("tree", 0);
+  for (const n of names) { DOM[n].count = 0; DOM[n].hits.classList.remove("show"); DOM[n].box.classList.remove("lit"); }
+  if (W.entity) W.entity.textContent = "·";
+  if (W.verdict) { W.verdict.textContent = "·"; W.query.textContent = ""; }
+  if (W.answer) W.answer.textContent = "·";
+  if (W.files) Object.values(W.files).forEach((f) => f.classList.remove("lit"));
+  setTokens([]);
+  setMemory(memoryBefore(index));
+  $("#q").textContent = j.sentence;
+  $("#qi").textContent = `${index + 1}/${J.length}`;
+  $("#answer").textContent = ""; $("#answer").className = "";
+  const dots = stepsDots(j.hops);
+  let carry = "text";
+  await sleep(250);
+
+  for (let s = 0; s < j.hops.length; s++) {
+    if (id !== run) return;
+    dots.forEach((d, k) => { d.classList.toggle("done", k < s); d.classList.toggle("now", k === s); });
+    const h = j.hops[s];
+    if (h.type === "burst") { await burst(h, id); continue; }
+    const from = h.from, to = h.to;
+    if (h.type === "call") {
+      setActive(from);
+      await fly(anchor(from), anchor(to), KIND[carry].c, { dur: 620, size: 8 });
+      if (id !== run) return;
+      arrive(to);
+      if (h.payload) { await reveal(h.payload, to, id); if (h.payload.kind === "text") carry = "text"; }
+    } else if (h.type === "return") {
+      if (h.payload) { carry = h.payload.kind; await reveal(h.payload, from, id); }
+      if (id !== run) return;
+      await fly(anchor(from), anchor(to), KIND[carry].c, { dur: 620, size: 9 });
+      if (id !== run) return;
+      arrive(to);
+      if (to === "cli" && h.payload && h.payload.kind === "answer") finale(j);
+    } else {
+      setActive(from);
+      await fly(anchor(from), anchor(to), KIND[carry].c, { dur: h.payload ? 560 : 380, size: h.payload ? 8 : 5 });
+      if (id !== run) return;
+      arrive(to);
+      if (h.payload) { carry = h.payload.kind; await reveal(h.payload, to, id); }
+      else await sleep(110);
+      if (id !== run) return;
+      await fly(anchor(to), anchor(from), KIND[carry].c, { dur: h.payload ? 560 : 360, size: h.payload ? 8 : 5 });
+      if (id !== run) return;
+      arrive(from);
+    }
+  }
+  dots.forEach((d) => { d.classList.add("done"); d.classList.remove("now"); });
+  await sleep(1300);
+  hideCard();
+  if (id === run && stream) { await sleep(500); if (id === run) play(index + 1); }
+}
+
+function arrive(n) { setActive(n); hit(n); }
+
+async function reveal(p, n, id) {
+  showCard(p, n);
+  chainSet(p);
+  const v = p.value;
+  if (p.kind === "tokens") setTokens(v);
+  if (p.kind === "id" && W.entity) { W.entity.textContent = v == null ? "null" : v; }
+  if (p.kind === "memory") setMemory(v);
+  if (p.kind === "resolved" && v.trace) {
+    const used = /chương sau|chương/.test(v.trace) ? "last_chapter" : /phần/.test(v.trace) ? "last_assignment_part" : /learning|LO/.test(v.trace) ? "last_lo" : null;
+    setMemory(memoryBefore(index), used);
+  }
+  if (p.kind === "result") {
+    if (W.verdict) {
+      W.verdict.textContent = v.found ? "✓" : "✗";
+      W.verdict.style.color = v.found ? "var(--ok)" : "var(--bad)";
+      W.query.textContent = v.query;
+    }
+    if (W.files && v.sources.length && R.kb) {
+      v.sources.forEach((s) => W.files[s] && W.files[s].classList.add("lit"));
+      DOM.kb.box.classList.add("lit");
+      beams.push({ a: anchor("kb"), b: anchor(n), t0: sim, dur: 1400, color: COLOR.kb });
+      hit("kb");
+    }
+    if (!v.found) shake();
+  }
+  if (p.kind === "answer" && W.answer && n === "answer") {
+    W.answer.textContent = FALLBACKS(v) ? "∅" : "✓";
+  }
+  if (p.kind === "tree" && !v.accepted) shake();
+  burstSparks(anchor(n), KIND[p.kind].c, 26, 1.4);
+  await sleep(DWELL[p.kind] || 700);
+  if (id === run) hideCard();
+}
+
+async function burst(h, id) {
+  setActive(h.from);
+  const a = anchor(h.from), jobs = [];
+  let total = 0;
+  for (const [target, calls] of Object.entries(h.targets)) {
+    const count = Object.values(calls).reduce((s, x) => s + x, 0);
+    total += count;
+    const n = Math.min(count, 42), span = Math.min(1100, 200 + n * 26);
+    const fnames = Object.keys(calls).map((f) => f.split(".").pop()).join(" / ");
+    floatLabel(target, "×" + count.toLocaleString("vi-VN"), fnames);
+    if (DOM[target]) DOM[target].box.classList.add("lit");
+    for (let i = 0; i < n; i++) {
+      jobs.push(sleep((i * span) / n).then(() => {
+        if (id !== run) return;
+        const r = R[target];
+        const b = r ? { x: r.x + r.w * (0.25 + Math.random() * 0.5), y: r.y + r.h * (0.35 + Math.random() * 0.45) } : anchor(target);
+        return fly(a, b, COLOR[target], { dur: 300 + Math.random() * 140, size: 3, arc: 0.45 }).then(() => {
+          if (id !== run) return;
+          burstSparks(b, COLOR[target], 3, 0.6);
+          hit(target, count / n);
+          bumpCounter(target, count / n);
+        });
+      }));
+    }
+  }
+  if (total > 200) shake();
+  await Promise.all(jobs);
+}
+
+function finale(j) {
+  const ans = j.answer;
+  const cls = j.branch == null ? "reject" : FALLBACKS(ans) ? "fallback" : "";
+  typeAnswer(ans, cls);
+  const p = anchor("cli");
+  const color = cls === "reject" ? "#f87171" : cls === "fallback" ? "#fbbf24" : "#f472b6";
+  burstSparks(p, color, 60, 2.4);
+  ring(p, color, 160); ring(p, "#ffffff", 90);
+  hit("cli");
+}
+
+/* ── controls ─────────────────────────────────────────────── */
+function setPaused(v) { paused = v; $("#play").textContent = paused ? "▶" : "❚❚"; $("#play").classList.toggle("on", paused); }
+function setSpeed(dir) {
+  const i = Math.max(0, Math.min(SPEEDS.length - 1, SPEEDS.indexOf(speed) + dir));
+  speed = SPEEDS[i]; $("#speed").textContent = speed + "×";
+}
+function cycleSpeed() { speed = SPEEDS[(SPEEDS.indexOf(speed) + 1) % SPEEDS.length]; $("#speed").textContent = speed + "×"; }
+function setStream(v) { stream = v; $("#stream").classList.toggle("on", v); }
+
+$("#prev").onclick = () => play(index - 1);
+$("#next").onclick = () => play(index + 1);
+$("#replay").onclick = () => play(index);
+$("#play").onclick = () => setPaused(!paused);
+$("#speed").onclick = cycleSpeed;
+$("#stream").onclick = () => setStream(!stream);
+$("#q").onclick = () => openPicker();
+
+function openPicker() {
+  $("#picker").classList.add("open");
+  $("#search").value = ""; fillList(""); $("#search").focus();
+}
+function closePicker() { $("#picker").classList.remove("open"); }
+function fillList(q) {
+  const host = $("#list"); host.textContent = "";
+  const needle = q.trim().toLowerCase();
+  J.forEach((j, i) => {
+    if (needle && !j.sentence.toLowerCase().includes(needle) && !(j.branch || "").toLowerCase().includes(needle)) return;
+    const b = el("button", "opt" + (i === index ? " cur" : ""));
+    const branch = el("span", "b", j.branch ? j.branch.replace("Q_", "") : "()");
+    branch.style.setProperty("--c", j.branch == null ? "#f87171" : j.found ? "#4ade80" : "#fbbf24");
+    b.append(el("span", "n", String(i + 1)), el("span", "s", j.sentence), branch);
+    b.onclick = () => { closePicker(); play(i); };
+    host.append(b);
+  });
+}
+$("#search").oninput = (e) => fillList(e.target.value);
+$("#picker").onclick = (e) => { if (e.target.id === "picker") closePicker(); };
+
+addEventListener("keydown", (e) => {
+  if ($("#picker").classList.contains("open")) {
+    if (e.key === "Escape") closePicker();
+    if (e.key === "Enter") { const first = $("#list .opt"); if (first) first.click(); }
+    return;
+  }
+  if (e.key === " ") { e.preventDefault(); setPaused(!paused); }
+  else if (e.key === "ArrowRight") play(index + 1);
+  else if (e.key === "ArrowLeft") play(index - 1);
+  else if (e.key === "r" || e.key === "R") play(index);
+  else if (e.key === "s" || e.key === "S") setStream(!stream);
+  else if (e.key === "+" || e.key === "=") setSpeed(1);
+  else if (e.key === "-") setSpeed(-1);
+  else if (e.key === "/") { e.preventDefault(); openPicker(); }
+});
+
+let resizeTimer = 0;
+new ResizeObserver(() => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => { positions(); flights.length = 0; }, 80);
+}).observe($("#viewport"));
+
+/* ── boot ─────────────────────────────────────────────────── */
+if (T) {
+  $("#impl").append(el("b", null, "demo"), document.createTextNode(` · ${J.length} câu`));
+  build();
+  positions();
+  buildChain();
+  requestAnimationFrame((t) => { last = t; frame(t); });
+  play(0);
+}
+</script>
+</body>
+</html>

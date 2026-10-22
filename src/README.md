@@ -58,7 +58,6 @@ src/
 ├── models/README.md             # optional model policy
 ├── output/                      # all nine required deliverable placeholders
 ├── tests/                       # KB, parser/generator, and pipeline test skeletons
-├── visually-explained-documentation.html
 ├── Dockerfile
 ├── pyproject.toml
 ├── setup.py
