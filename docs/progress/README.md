@@ -89,4 +89,8 @@ khi tầng trước xong.
   muốn sửa phải báo cả nhóm.
 - **Tiêu chí nghiệm thu một nhánh grammar:** pass toàn bộ câu mẫu thuộc nhánh; không làm rớt câu
   nào đang pass; không sinh câu mơ hồ; đọc 20 câu sinh ngẫu nhiên không có câu vô nghĩa.
-- **Nhánh `sample` là bản tham khảo, đóng băng** — không commit vào đó.
+- **Nhánh `sample` là bản tham khảo, đóng băng** — không commit vào đó. **Khuyến khích đọc** để
+  xem một cách làm từng tầng: code ở `docs/sample-src/src/hcmut/iaslab/nlp/app/`, output mẫu ở
+  `docs/sample-src/output/`. Xem không cần đổi nhánh: `git show sample:docs/sample-src/src/hcmut/iaslab/nlp/app/parser.py`,
+  hoặc mở song song: `git worktree add ../Assignment-sample sample`. Điều kiện: tự hiểu và giải thích
+  được code mình nộp (đề mục 8), pass test hợp đồng, ghi nguồn tham khảo trong báo cáo.

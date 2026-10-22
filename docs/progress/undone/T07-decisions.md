@@ -6,9 +6,9 @@
 Chốt trước khi giao việc code; ghi kết quả vào đây rồi chuyển file sang `done/`.
 
 ## Việc cần làm
-- [ ] **Thành viên có được đọc code nhánh `sample` không?** Golden test đã đủ để nghiệm thu mà không
-      cần đọc. Đọc thì nhanh nhưng dễ thành chép; không đọc thì hiểu bài hơn (đề mục 8: phải hiểu và
-      giải thích lại được code).
+- [x] **Thành viên có được đọc code nhánh `sample` không?** **Có — khuyến khích đọc** để tham khảo
+      cách làm từng tầng. Điều kiện: tự hiểu và giải thích lại được code mình nộp (đề mục 8, có thể
+      bị gọi thuyết trình); code phải pass test hợp đồng; ghi nguồn tham khảo trong báo cáo (T22).
 - [ ] **Độ chặt của golden KB** (`docs/contracts.md` §4): đang khớp tuyệt đối `kb.json` (kể cả kiểu,
       ví dụ `chapter_number` là int). Giữ nguyên, hay nới thành "đúng khoá + kiểu"?
 - [x] **Hướng Phần II**: Lựa chọn 1 — Classical (luật/keyword). **Không làm** Lựa chọn 2
