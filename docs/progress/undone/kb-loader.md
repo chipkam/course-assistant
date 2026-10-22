@@ -15,5 +15,5 @@ Nền của phần query — nên làm sớm, song song với Phần I.
 - [ ] `validate()`: kiểm schema và tham chiếu chéo (chương trong lịch phải có trong topics, …).
 
 ## Ghi chú
-- Tham khảo cách làm: `docs/kb-loader.md`.
+- Tham khảo cách làm: `docs/knowledge/kb-loader.md`.
 - Run time chỉ bước **query** mới mở KB; bước intent không đọc KB.

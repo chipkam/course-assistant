@@ -33,6 +33,12 @@ S→NP VP ; NP: thử luật "N ADJ" → khớp N=sinh_viên, đòi ADJ nhưng g
 ```
 Cái nhánh ADJ thử-rồi-bỏ chính là backtracking.
 
+**Trong code nhóm:** skeleton đặt tên lớp `EarleyParser` (chart parser, Chương 3 — không lùi,
+nhớ các phần đã khớp nên không bùng nổ). Thuật toán là phần **tự chọn** — recursive-descent
+cũng được — nhưng **cây ra phải đúng hợp đồng** (`docs/contracts.md` §2): nhãn node = tên
+non-terminal, lá = token, ký hiệu sinh rỗng (`PREFIX`, `SUFFIX` khi không có tiểu từ) vẫn là
+một node không con.
+
 ## Ngoài grammar → `()` (từ chối, không bịa)
 Không cách ráp nào ăn hết token → câu **ngoài grammar** → xuất cây rỗng `()`.
 Đây là "chặn ở grammar" của doc 03: câu sai **HÌNH DẠNG** dừng ngay đây, chưa kịp
@@ -41,6 +47,7 @@ hỏi KB. Là cơ chế **không-bịa** ở tầng cú pháp.
 ## Nhập nhằng: 1 câu, nhiều cây
 Grammar cho >1 cây cho cùng câu = **ambiguity**. Bài này lấy **cây đầu tiên** tìm
 được là đủ — đừng vẽ; chọn cây theo xác suất (PCFG, Chương 6) là chuyện optional.
+Grammar phase 1 đã được kiểm: không câu nào có >1 cây — thêm luật mới thì giữ điều đó.
 
 ## Parser gần như MỘT-ĐƯỜNG ⚙️
 Thuật toán chuẩn, viết đúng **1 lần dùng mãi**, KHÔNG phụ thuộc số intent. Thêm

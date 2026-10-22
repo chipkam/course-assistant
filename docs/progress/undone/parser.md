@@ -17,4 +17,4 @@ Cần trước: `tokenizer-grammar-loader.md`.
 ## Ghi chú
 - Grammar hiện tại không có câu mơ hồ (đã kiểm phase 1). Nếu sau này có, parser phải chọn cây
   một cách xác định (deterministic).
-- Lý thuyết: `docs/04-parser.md`.
+- Lý thuyết: `docs/knowledge/04-parser.md`.

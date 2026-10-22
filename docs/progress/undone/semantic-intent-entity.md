@@ -26,4 +26,4 @@
 ## Ghi chú
 - `ASSIGNMENT_PART` chỉ có `phần` / `part` + số La Mã i–iv; câu deadline luôn hỏi deadline chung
   của BTL (không theo phần).
-- Lý thuyết: `docs/05-semantic-intent-entity.md`.
+- Lý thuyết: `docs/knowledge/05-semantic-intent-entity.md`.

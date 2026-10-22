@@ -86,5 +86,6 @@ giản để chạy nhanh → **điểm ngọt**, nên 70 năm sau bài này v�
 
 ## Nối về bài tập
 
-`output/grammar.txt` = bộ 4 trên (terminal tiếng Việt miền môn học). `output/samples.txt`
+Grammar của nhóm: `src/data/grammar.cfg`, mỗi luật một dòng `A -> B "từ" | …` (alternative
+rỗng = ε). `output/grammar.txt` = bộ 4 trên (terminal tiếng Việt miền môn học). `output/samples.txt`
 = chạy dẫn xuất hàng loạt. Còn thiếu **chiều NGƯỢC** (câu→cây) = **Parser** = Nấc 4.

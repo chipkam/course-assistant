@@ -16,4 +16,4 @@
       của sample, golden đã sửa; xem §5).
 
 ## Ghi chú
-- Lý thuyết: `docs/06-query-kb-answer.md`.
+- Lý thuyết: `docs/knowledge/06-query-kb-answer.md`.

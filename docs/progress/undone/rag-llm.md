@@ -9,4 +9,4 @@
 - [ ] Phần IV thêm ca hallucination.
 
 ## Ghi chú
-- Chỉ làm khi lõi Classical (Phần I, II, IV) đã chắc. Xem `docs/09-optional-extensions.md`.
+- Chỉ làm khi lõi Classical (Phần I, II, IV) đã chắc. Xem `docs/knowledge/09-optional-extensions.md`.

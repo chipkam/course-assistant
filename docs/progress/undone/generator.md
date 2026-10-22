@@ -13,4 +13,4 @@
 - [ ] Ghi `samples.txt`.
 
 ## Ghi chú
-- Lý thuyết: `docs/07-generator.md`.
+- Lý thuyết: `docs/knowledge/07-generator.md`.

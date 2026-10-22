@@ -1,6 +1,6 @@
 # KB Loader — biến file .txt "như văn xuôi" thành tủ tra được
 
-> Cross-cutting như 03. Cách đọc `data/kb/*.txt` thành cấu trúc query lúc chạy.
+> Cross-cutting như 03. Cách đọc `src/data/kb/*.txt` thành cấu trúc query lúc chạy.
 > Plumbing 🔧, không phải việc não — nhưng bỏ qua thì cả run-time đứng hình.
 
 ## Cảm giác "vô cấu trúc" là bẫy
@@ -33,11 +33,16 @@ theo entity bạn sẽ tra** (khớp "ô trống = entity", doc 03).
 | `resources` | mục tài liệu | chủ đề/keyword | GET_RESOURCE |
 | `regulations` | mục quy định | chủ đề luật | GET_RULE |
 
+**Kết quả cuối phải đúng hợp đồng** (`docs/contracts.md` §4, so khớp với
+`src/tests/golden/kb.json`): khóa là **ID chuẩn** — `weeks["WEEK_03"]`, `topics["CH03"]`,
+`chapter_weeks["CH04"] = ["WEEK_04", "WEEK_05"]` — và tên trường cố định (`week_id`,
+`chapter_id`, `topics`…). Snippet dưới dùng khóa số `3` cho gọn để minh họa ý tưởng.
+
 ## Bằng chứng: 20 dòng parse `schedule.txt`
 ```python
 import re, io
 weeks, cur, key = {}, None, None
-for raw in io.open("data/kb/schedule.txt", encoding="utf-8"):
+for raw in io.open("src/data/kb/schedule.txt", encoding="utf-8"):
     line = raw.rstrip("\n")
     m = re.match(r"WEEK (\d+)", line)
     if m:
