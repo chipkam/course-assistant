@@ -4,7 +4,9 @@ This directory is a self-contained implementation skeleton derived from the
 complete reference project on branch `sample` at `docs/sample-src/`. It mirrors
 the reference project's code, data, input, output, tests, packaging, Docker, and
 visual-documentation files. Assignment algorithms remain explicit
-`NotImplementedError` tasks; data files contain schemas and TODO placeholders.
+`NotImplementedError` tasks. `data/kb/` and `data/scaffolding/` hold the complete
+supplied dataset copied from the reference project, while `data/grammar.cfg` stays
+a seed template to be extended.
 
 ## Call flow
 
@@ -48,7 +50,7 @@ question
 src/
 ├── data/
 │   ├── grammar.cfg              # valid seed CFG + every semantic Q_* branch
-│   ├── kb/                      # six authoritative-data schemas
+│   ├── kb/                      # six authoritative course-data files
 │   └── scaffolding/             # entities, tests, challenges, dialogues, FAQ
 ├── hcmut/iaslab/nlp/app/        # replaceable pipeline stages
 ├── input/sentences.txt          # batch-input template
@@ -63,8 +65,10 @@ src/
 └── run.py
 ```
 
-The placeholder files are intentional: they show the required schema and output
-format without copying the completed answers from the `sample` branch.
+The `input/` and `output/` placeholders and the seed `data/grammar.cfg` are
+intentional: they show the required schema and output format without copying the
+completed grammar and results from the `sample` branch. The data under
+`data/kb/` and `data/scaffolding/` is the full reference dataset.
 
 Every Python file starts with a module docstring describing its boundary,
 invariants, and intended extension points. Read those docstrings before filling
