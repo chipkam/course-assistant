@@ -5,6 +5,7 @@
 - **Code:** `src/hcmut/iaslab/nlp/app/parser.py` (`EarleyParser.parse`)
 - **Output:** `src/output/parse-results.txt`
 - **Test:** `src/tests/test_parser_generator.py`
+- **Nghiệm thu:** `tests.test_contract_parser` pass (hợp đồng: `docs/contracts.md` §2)
 
 Cần trước: `tokenizer-grammar-loader.md`.
 

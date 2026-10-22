@@ -30,6 +30,9 @@ Legend dùng trong tiêu đề (giữ từ `docs/todo.md`): 🔥 tốn công/ăn
 
 ## Quy ước làm việc (rút từ review phase 1)
 
+- **Trước khi code một tầng: đọc `docs/contracts.md`.** Nghiệm thu = test hợp đồng của tầng đó
+  pass (`cd src && python -m unittest tests.test_contract_<tầng>`); ghi trong mục **Nghiệm thu**
+  của từng file `undone/`. Cách làm bên trong tầng là tự do.
 - **PR nhỏ, đúng phạm vi, rebase lên `main` trước khi mở.**
 - **Grammar:** giữ đúng 26 nhánh `Q_*` của `QUESTION`. Câu mới = thêm alternative vào nhánh có
   sẵn, không thêm nhánh mới.

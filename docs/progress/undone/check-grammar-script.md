@@ -17,3 +17,5 @@ trước khi mở PR.
 ## Ghi chú
 - Các bước đã dùng để gộp phase 1: `done/phase1-grammar-merge.md`, mục "Cách kiểm tra". Khi code
   của nhóm chưa xong thì chạy bằng code của nhánh `sample`.
+- `tools/make_golden.py` đã có sẵn phần lấy code `sample` qua `git archive` và chạy trên
+  `src/data/` — dùng lại cách đó. Sau khi đổi grammar, chạy lại nó rồi chạy test hợp đồng.

@@ -3,6 +3,8 @@
 - **Trạng thái:** chưa làm
 - **Phụ trách:** chưa giao
 - **Code:** `src/hcmut/iaslab/nlp/app/paths.py`, `tokenizer.py`, `grammar.py`, `tree.py`
+- **Nghiệm thu:** `tests.test_contract_tokenizer` pass; `tests.test_contract_parser` phần
+  `test_grammar_has_the_26_question_branches` pass (hợp đồng: `docs/contracts.md` §1–2)
 
 Bước 1 trong thứ tự hiện thực của `src/README.md`; parser, generator và semantic đều cần.
 

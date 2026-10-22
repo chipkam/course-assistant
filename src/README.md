@@ -71,6 +71,12 @@ schema and output format without copying the completed results from the `sample`
 branch. The data under `data/kb/` and `data/scaffolding/` is the full reference
 dataset, and `data/grammar.cfg` is the merged phase 1 grammar.
 
+Stage boundaries are fixed by `../docs/contracts.md` and checked by
+`tests/test_contract_*.py` against golden records in `tests/golden/`
+(regenerate with `python tools/make_golden.py` from the repository root). Run
+`python -m unittest discover -s tests -t .` from this directory; a stage that
+still raises `NotImplementedError` is skipped rather than failed.
+
 Every Python file starts with a module docstring describing its boundary,
 invariants, and intended extension points. Read those docstrings before filling
 in a TODO.

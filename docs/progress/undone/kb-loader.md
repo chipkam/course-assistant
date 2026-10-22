@@ -4,6 +4,8 @@
 - **Phụ trách:** chưa giao
 - **Code:** `src/hcmut/iaslab/nlp/app/kb.py` (`KnowledgeBase.load`, `validate`)
 - **Test:** `src/tests/test_kb.py`
+- **Nghiệm thu:** `tests.test_contract_kb` pass — `KnowledgeBase` khớp tuyệt đối
+  `src/tests/golden/kb.json`, `validate()` trả `[]` (hợp đồng: `docs/contracts.md` §4)
 
 Nền của phần query — nên làm sớm, song song với Phần I.
 

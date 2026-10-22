@@ -4,6 +4,8 @@
 - **Phụ trách:** chưa giao
 - **Code:** `src/hcmut/iaslab/nlp/app/evaluate.py`
 - **Output:** `src/output/evaluation.txt`
+- **Nghiệm thu:** `tests.test_contract_pipeline` pass — mọi câu sample làm đúng vẫn đúng; số câu
+  cải tiến (C007, C008) được in ra (hợp đồng: `docs/contracts.md` §8)
 
 ## Việc cần làm
 - [ ] Chạy `src/data/scaffolding/sample_queries.txt`, so EXPECTED (intent, entity, query status,
