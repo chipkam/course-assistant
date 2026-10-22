@@ -1,4 +1,4 @@
-# ✨ Phần III — Dialogue (optional)
+# T15 · ✨ Phần III — Dialogue (optional)
 
 - **Trạng thái:** chưa làm
 - **Phụ trách:** chưa giao
@@ -8,6 +8,8 @@
   `action` → frame sau khi giải)
 
 ## Việc cần làm
+- [ ] Hàm cần viết: `DialogueContext.resolve`, `DialogueContext.update`.
+- [ ] Test mẫu `src/tests/test_pipeline.py`: thay `skipTest` TODO về ngữ cảnh hội thoại.
 - [ ] Giữ ngữ cảnh cục bộ theo loại: chương / phần BTL / LO vừa nhắc.
 - [ ] Giải tham chiếu: `nó`, `chương này/đó`, `phần này/đó`, `nội dung này`.
 - [ ] Chạy 6 hội thoại trong `src/data/scaffolding/dialogues.txt`.

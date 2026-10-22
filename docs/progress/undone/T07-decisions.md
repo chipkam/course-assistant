@@ -1,4 +1,4 @@
-# 🔧 Các quyết định đang treo
+# T07 · 🔧 Các quyết định đang treo
 
 - **Trạng thái:** chưa làm
 - **Phụ trách:** Phúc (+ cả nhóm)
@@ -14,6 +14,6 @@ Chốt trước khi giao việc code; ghi kết quả vào đây rồi chuyển 
 - [x] **Hướng Phần II**: Lựa chọn 1 — Classical (luật/keyword). **Không làm** Lựa chọn 2
       (LLM/RAG): đề cho chọn 1 trong 2, và LLM/RAG không thay được phần NLP cốt lõi (đề 7.3, 9).
 - [x] **Codebase chuẩn**: skeleton trên `main` (theo `sample`), không dùng code PR #2 làm nền —
-      `done/pr2-pipeline-decision.md`.
+      `done/T05-codebase-decision.md`.
 - [x] **Định dạng 9 file output**: theo sample — ghi tại `docs/contracts.md` §9.
 - [ ] **Phân công đợt code**: ai nhận task nào trong `undone/`.

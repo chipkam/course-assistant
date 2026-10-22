@@ -1,4 +1,4 @@
-# 🔥 Cây → semantic + Intent/Entity (Phần II)
+# T11 · 🔥 Cây → semantic + Intent/Entity (Phần II)
 
 - **Trạng thái:** chưa làm
 - **Phụ trách:** chưa giao
@@ -8,6 +8,7 @@
   26 nhánh → intent / entity / slots). Test dùng cây golden nên không phải chờ parser.
 
 ## Việc cần làm
+- [ ] Hàm cần viết: `SemanticInterpreter.interpret`; `EntityLexicon.from_file`, `resolve`, `resolve_week`, `resolve_chapter`, `resolve_topic`, `resolve_lo`, `resolve_assignment_part`, `resolve_resource_topic`, `resolve_rule`.
 - [ ] `SemanticInterpreter.interpret`: lấy nhánh `Q_*` con của `QUESTION` → intent; mỗi nhánh một
       handler rút slot, ví dụ `GET_SCHEDULE(week=WEEK_03)`.
 - [ ] Đọc entity qua node có tên (`WEEK_ENTITY`, `CHAPTER_ENTITY`, `TOPIC_ENTITY`, `LO_ENTITY`,
@@ -19,7 +20,7 @@
       `Q_ASSIGNMENT_FEATURE` đọc **nhãn** node con (`FEAT_PARSING` → `PART_I`, `FEAT_SEMANTIC` →
       `PART_II`, `FEAT_CONTEXT` → `PART_III`, `FEAT_EVAL` → `PART_IV`) thay vì tra cứng 5 từ như
       sample. Đổi hợp đồng §3 → làm theo `docs/contracts.md` §10, rồi tiếp mục FEAT_* trong
-      `grammar-followups.md`.
+      `T18-grammar-extensions.md`.
 - [ ] **Alias mới cho lexicon** — cải tiến, cũng theo §10: `dịch máy` → `MACHINE_TRANSLATION`
       (resource); `thư viện có sẵn` → `EXTERNAL_LIBRARIES` (rule).
 

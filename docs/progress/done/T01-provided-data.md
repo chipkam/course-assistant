@@ -1,4 +1,4 @@
-# ✅ Dữ liệu thầy cho sẵn
+# T01 · ✅ Dữ liệu thầy cho sẵn
 
 - **Trạng thái:** xong (có sẵn từ đề, không phải làm)
 - **Nguồn:** bộ dữ liệu mẫu đi kèm đề CO3085, nay nằm ở `src/data/`

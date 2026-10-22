@@ -70,7 +70,7 @@ data/       bản data gốc cũ của thầy — code dùng src/data/
 ```
 Nộp (§7.4) bắt buộc y khuôn `project/{src, data, models, input, output, README.md,
 Dockerfile}` → khi đóng gói phải sắp lại; `docs/`, `tools/`, `tests/golden/` gỡ khỏi zip cho gọn
-<10MB. Chi tiết: `docs/progress/undone/submission.md`.
+<10MB. Chi tiết: `docs/progress/undone/T24-submission.md`.
 
 ## 4. Điểm thiết kế "ngon" (mỗi cái 1 lý do)
 1. **Semantic grammar — nhét intent vào tên nhánh `Q_*`** → intent+entity **rơi ra từ cây**,

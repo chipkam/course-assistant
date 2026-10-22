@@ -1,4 +1,4 @@
-# 🔥 Phase 1 — Mở rộng và gộp `grammar.cfg`
+# T03 · 🔥 Phase 1 — Mở rộng và gộp `grammar.cfg`
 
 - **Trạng thái:** xong
 - **Phụ trách:** Bảo (#1), Bách (#2), Khoa (#3) · review + gộp: Phúc
@@ -9,7 +9,7 @@
 PR #1, #2, #3 **không merge trực tiếp** (đôi một conflict ở `grammar.cfg`; #3 crash; #2 kèm 71
 file ngoài phạm vi). Thay vào đó lấy **grammar của nhánh `sample` (đóng băng) làm nền**, rồi chọn
 lọc từng cách hỏi của 3 người mà sample chưa có: nhận nếu không làm hỏng gì, loại nếu không sửa
-được. 3 PR kết thúc bằng merge tay: `close-phase1-prs.md`.
+được. 3 PR kết thúc bằng merge tay: `T04-phase1-prs.md`.
 
 ---
 
@@ -47,7 +47,7 @@ thức (C001–C008), 6 hội thoại.
 6. Đo đóng góp: thay mọi danh sách entity bằng 1 giá trị cố định, sinh "khung câu" của từng nhánh
    từ grammar của người đóng góp, xem grammar nền có parse được vào đúng nhánh không.
 
-Script mẫu của các bước này sẽ được đưa vào repo ở `undone/check-grammar-script.md`.
+Script mẫu của các bước này sẽ được đưa vào repo ở `undone/T19-check-grammar-tool.md`.
 
 ---
 
@@ -157,7 +157,7 @@ nhánh có sẵn → chứng tỏ không cần nhánh mới.
 - 4 nhánh mới — giữ 26 nhánh.
 - `"context" "-" "free"` — sample đã viết đúng `"context-free"`.
 - `Tài liệu nào nói về X là gì` — đuôi "là gì" thừa sau "nào".
-- Phần pipeline (71 file) — ngoài phạm vi grammar, xem `done/pr2-pipeline-decision.md` (quyết định: không dùng làm nền).
+- Phần pipeline (71 file) — ngoài phạm vi grammar, xem `done/T05-codebase-decision.md` (quyết định: không dùng làm nền).
 
 ### 3.3 Khoa — PR #3
 
@@ -220,12 +220,12 @@ các gì?`, `Chương này nằm ở chương nào?`, `Phần 10 của project l
 | Deadline theo phần (`Bao giờ nộp phần I`) | semantic luôn trả deadline chung của BTL → trả lời sai đối tượng |
 | Hỏi output không nói phần nào (`ASSIGNMENT_TARGET -> ASSIGNMENT_ENTITY`) | không biết trả lời phần nào |
 | `RESOURCE_TOPIC`: `nlp`, `nlp cơ bản`, `nlp tiếng việt`, `ngữ pháp` | không có ID trong lexicon → NOT_FOUND |
-| `dịch máy`, `thư viện có sẵn` | đúng nghĩa nhưng cần thêm alias trong code → `undone/semantic-intent-entity.md` |
+| `dịch máy`, `thư viện có sẵn` | đúng nghĩa nhưng cần thêm alias trong code → `undone/T11-semantic.md` |
 | `RESOURCE_NOUN`: `reference`, `textbook` | thừa, đã có tiếng Việt |
 | `điểm danh`, `chuyên cần`, `nghỉ học`, `chép bài`, `share code` | quy định không có trong KB → NOT_FOUND |
 | `chia sẻ bài` | sample đã có `chia sẻ bài làm` |
 | `RULE_NOUN` `yêu cầu`, `về việc` | sinh `Yêu cầu AI là gì`, `Quy định về việc AI` |
-| `FEAT_*` (`grammar`, `intent`, `kb`, `metric`, …) | semantic tra cứng 5 từ → cần sửa code trước, `undone/semantic-intent-entity.md` |
+| `FEAT_*` (`grammar`, `intent`, `kb`, `metric`, …) | semantic tra cứng 5 từ → cần sửa code trước, `undone/T11-semantic.md` |
 | Tổ hợp rỗng `MODAL` / `QUANTITY` / `ASSIGNMENT_OUTPUT_TARGET` / `OPT_*` | sinh `BTL bắt nộp các gì`, `Btl định dạng gì` |
 | `cái này`, `cái đó`, `bài này`, `mô đun này` | mơ hồ, không rõ trỏ chương hay phần BTL; sinh `Chương này nằm ở chương nào` |
 | `Còn tuần sau / phần sau / câu tiếp theo` | handler chỉ xử lý "chương kế tiếp" → sai nghĩa |

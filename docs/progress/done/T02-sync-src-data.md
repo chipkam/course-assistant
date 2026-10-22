@@ -1,4 +1,4 @@
-# 🔧 Đồng bộ `src/data/` với bộ dữ liệu của sample
+# T02 · 🔧 Đồng bộ `src/data/` với bộ dữ liệu của sample
 
 - **Trạng thái:** xong
 - **Phụ trách:** Phúc
@@ -10,7 +10,7 @@
       `schedule.txt` 21 dòng) bằng nguyên bộ dữ liệu của nhánh `sample`
       (`docs/sample-src/data/`, `schedule.txt` 166 dòng).
 - [x] `grammar.cfg` không thay ở bước này (grammar làm riêng — xem
-      [phase1-grammar-merge.md](phase1-grammar-merge.md)).
+      [T03-grammar-phase1.md](T03-grammar-phase1.md)).
 - [x] Cập nhật `src/README.md` và `src/data/README.md` cho khớp.
 
 ## Ghi chú
@@ -20,4 +20,4 @@
 - Code đọc data qua `ProjectPaths.from_root(root)` → `root/data/...`, với root là `src/`.
 - PR #2 (Bách) có sửa `entities.txt`, `sample_queries.txt`, `dialogues.txt`,
   `challenge_queries.txt` theo format code riêng — sẽ conflict nếu merge PR đó sau commit này
-  (PR này không merge — xem `done/pr2-pipeline-decision.md`).
+  (PR này không merge — xem `done/T05-codebase-decision.md`).

@@ -1,4 +1,4 @@
-# 🔧 Quyết định về pipeline trong PR #2 (Bách)
+# T05 · 🔧 Quyết định về pipeline trong PR #2 (Bách)
 
 - **Trạng thái:** xong
 - **Phụ trách:** Phúc (lead)
@@ -22,7 +22,7 @@ Lý do:
 ## Phần của PR #2 vẫn dùng được
 
 - Phần grammar (entity list, `môn học`, `tài liệu tham khảo…`) đã gộp vào `main` —
-  `phase1-grammar-merge.md` mục 3.2.
+  `T03-grammar-phase1.md` mục 3.2.
 - Code trong PR có thể **chuyển dần vào đúng module của skeleton** khi Bách nhận task tầng
   tương ứng: cách làm bên trong mỗi tầng là tự do, miễn pass test hợp đồng của tầng đó
   (`docs/contracts.md`).

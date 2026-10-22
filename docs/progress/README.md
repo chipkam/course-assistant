@@ -3,43 +3,55 @@
 > Cái nào **thầy cho sẵn**, cái nào **mình phải tự xây**. Đầu tư: **~70% vào
 > Grammar + Cây→Intent**, 30% cho đường ống còn lại. Lý thuyết từng trạm: `docs/knowledge/`.
 
-Mỗi việc là **một file `.md`**:
+Mỗi việc là **một file `.md`** tên `Txx-<tên>.md`:
 
 - `undone/` — việc chưa xong (chưa làm hoặc đang làm).
 - `done/` — việc đã xong, kèm kết quả và commit.
 
-Xong một việc: `git mv docs/progress/undone/<việc>.md docs/progress/done/`, rồi điền
-**Ngày xong**, **Commit** và **Kết quả** trong file. Việc mới phát sinh thì tạo file mới
-trong `undone/`.
+**ID `Txx`** cố định suốt đời task: không đổi khi chuyển thư mục, không dùng lại. Việc mới lấy số
+kế tiếp (hiện tới **T24**). Gọi task bằng ID trong PR, commit, chat: "xong T11".
+
+**Tên = ranh giới**: task code mang tên tầng trong `docs/contracts.md` và trùng tên test
+nghiệm thu (`T11-semantic` ↔ `tests.test_contract_semantic`); một file code chỉ thuộc một task.
+
+Xong một việc: `git mv docs/progress/undone/Txx-<tên>.md docs/progress/done/`, rồi điền
+**Ngày xong**, **Commit** và **Kết quả** trong file.
 
 Legend dùng trong tiêu đề: ✅ có sẵn · 🔥 tốn công/ăn điểm · ⚙️ chuẩn, làm 1 lần ·
 🔧 plumbing · ✨ optional (điểm cộng).
 
-## Bản đồ việc → file
+## Danh sách task
 
-| Nhóm | Việc | File |
-| --- | --- | --- |
-| Thầy cho sẵn ✅ | intent, entity vocab, KB, test có đáp án | `done/provided-data.md` |
-| Nền | 🔧 Đồng bộ `src/data/` với data đầy đủ | `done/sync-src-data.md` |
-| Nền | 🔧 KB loader | `undone/kb-loader.md` |
-| Nền | ⚙️ Paths, tokenizer, grammar loader | `undone/tokenizer-grammar-loader.md` |
-| Phần I | 🔥 Grammar (CFG) — phase 1 | `done/phase1-grammar-merge.md` |
-| Phần I | 🔥 Grammar — việc còn lại, `output/grammar.txt` | `undone/grammar-followups.md` |
-| Phần I | ⚙️ Parser | `undone/parser.md` |
-| Phần I | ⚙️ Generator | `undone/generator.md` |
-| Phần II | 🔥 Cây → semantic + Intent/Entity | `undone/semantic-intent-entity.md` |
-| Phần II | 🔧 Query builder | `undone/query-builder.md` |
-| Phần II | 🔧 Answer + not-found | `undone/answer-not-found.md` |
-| Ghép | 🔧 Pipeline + CLI + ghi 9 file output (`run.py all`) | `undone/pipeline-cli-output.md` |
-| Phần IV | 🔧 Evaluation + mở rộng bộ test | `undone/evaluation.md` |
-| Optional | ✨ Phần III — Dialogue | `undone/dialogue.md` |
-| Nộp bài | 🔥 Báo cáo (+ ghi nguồn, khai báo AI) | `undone/report.md` |
-| Nộp bài | 🔧 Video demo + thuyết trình | `undone/demo-video.md` |
-| Nộp bài | 🔧 README, Dockerfile, đóng gói zip | `undone/readme.md`, `undone/dockerfile.md`, `undone/submission.md` |
-| Quy trình | 🔧 Hợp đồng giữa các tầng + golden test | `done/contracts-golden.md` |
-| Quy trình | 🔧 Codebase chuẩn: skeleton, không dùng pipeline PR #2 | `done/pr2-pipeline-decision.md` |
-| Quy trình | 🔧 Kết thúc PR phase 1 (merge tay) | `done/close-phase1-prs.md` |
-| Quy trình | 🔧 Quyết định treo, script check grammar | `undone/open-decisions.md`, `undone/check-grammar-script.md` |
+| ID | Việc | Ranh giới (code · hợp đồng) | Nghiệm thu | Trạng thái |
+| --- | --- | --- | --- | --- |
+| T01 | ✅ Dữ liệu thầy cho sẵn | `src/data/` | — | done |
+| T02 | 🔧 Đồng bộ `src/data/` với data đầy đủ | `src/data/kb`, `scaffolding` | — | done |
+| T03 | 🔥 Grammar phase 1 — mở rộng và gộp | `src/data/grammar.cfg` | 42/42 · 0 mơ hồ | done |
+| T04 | 🔧 Kết thúc PR phase 1 (merge tay) | GitHub PR #1–#3 | — | done |
+| T05 | 🔧 Codebase chuẩn: skeleton, không dùng pipeline PR #2 | — | — | done |
+| T06 | 🔧 Hợp đồng giữa các tầng + golden test | `docs/contracts.md`, `tools/make_golden.py`, `src/tests/` | — | done |
+| T07 | 🔧 Quyết định của nhóm | — | — | undone |
+| T08 | ⚙️ Tokenizer | `tokenizer.py` · §1 | `test_contract_tokenizer` | undone |
+| T09 | ⚙️ Grammar loader + Parser | `grammar.py`, `parser.py` · §2 | `test_contract_parser` | undone |
+| T10 | ⚙️ Generator | `generator.py` | parse lại 100% | undone |
+| T11 | 🔥 Semantic + entity lexicon | `semantic.py`, `entities.py` · §3 | `test_contract_semantic` | undone |
+| T12 | 🔧 KB loader | `kb.py` · §4 | `test_contract_kb` | undone |
+| T13 | 🔧 Query | `query.py` · §5 | `test_contract_query` | undone |
+| T14 | 🔧 Answer + not-found | `answer.py` · §6 | `test_contract_answer` | undone |
+| T15 | ✨ Dialogue (Phần III) | `dialogue.py` · §7 | `test_contract_dialogue` | undone |
+| T16 | 🔧 Pipeline + CLI + 9 file output | `pipeline.py`, `cli.py`, `output.py`, `paths.py`, `run.py` · §8–9 | `test_contract_pipeline` + `run.py all` | undone |
+| T17 | 🔧 Evaluation + mở rộng bộ test | `evaluate.py` · §8 | `evaluation.txt` đúng §9 | undone |
+| T18 | 🔥 Grammar mở rộng sau phase 1 | `src/data/grammar.cfg` | 42/42 · 0 mơ hồ | undone |
+| T19 | 🔧 Script kiểm tra grammar | `tools/` | — | undone |
+| T20 | 🔧 README nộp bài | `README.md` | đủ mục đề 7.5 | undone |
+| T21 | 🔧 Dockerfile | `Dockerfile` | build + chạy được | undone |
+| T22 | 🔥 Báo cáo (+ ghi nguồn, khai báo AI) | — | đủ mục đề 6, 7.6 | undone |
+| T23 | 🔧 Video demo + thuyết trình | — | đủ cảnh đề 7.6 | undone |
+| T24 | 🔧 Đóng gói zip nộp bài | `project/` | đúng đề 7.4, < 10MB | undone |
+
+Đợt code (thứ tự gợi ý): **T08, T09, T12, T10** song song → **T11, T13** → **T14, T16** → **T17,
+T15** → **T20–T24**. Test hợp đồng dùng đầu vào golden nên T11, T13, T14 nghiệm thu được trước
+khi tầng trước xong.
 
 ## Ai đọc KB khi nào (đừng lẫn)
 
@@ -50,11 +62,12 @@ Legend dùng trong tiêu đề: ✅ có sẵn · 🔥 tốn công/ăn điểm ·
 ## Mẫu file
 
 ```markdown
-# 🔧 Tên việc
+# Txx · 🔧 Tên việc
 
 - **Trạng thái:** chưa làm | đang làm | xong
 - **Phụ trách:** <tên> (chưa giao)
-- **Output:** <file sinh ra, nếu có>
+- **Code:** <file thuộc ranh giới task này>
+- **Nghiệm thu:** <test / tiêu chí>
 - **Ngày xong / Commit:** <điền khi chuyển sang done/>
 
 ## Việc cần làm

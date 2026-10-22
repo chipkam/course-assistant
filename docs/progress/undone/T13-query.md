@@ -1,4 +1,4 @@
-# 🔧 Query builder (Phần II)
+# T13 · 🔧 Query builder (Phần II)
 
 - **Trạng thái:** chưa làm
 - **Phụ trách:** chưa giao
@@ -10,6 +10,7 @@
   loader; chạy end-to-end mới cần hai task đó.
 
 ## Việc cần làm
+- [ ] Hàm cần viết: `QueryEngine.execute` (một nhánh cho mỗi intent).
 - [ ] Predicate → truy vấn KB theo intent, **không đọc lại câu hỏi gốc**.
 - [ ] Trả `QueryResult` có `found`, dữ kiện và nguồn (`kb/<file>.txt`).
 - [ ] `found = False` khi dữ kiện rỗng — ví dụ output của Phần II/III/IV không có trong KB (bug

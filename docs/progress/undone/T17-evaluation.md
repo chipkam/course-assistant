@@ -1,4 +1,4 @@
-# 🔧 Evaluation (Phần IV)
+# T17 · 🔧 Evaluation (Phần IV)
 
 - **Trạng thái:** chưa làm
 - **Phụ trách:** chưa giao
@@ -8,6 +8,7 @@
   cải tiến (C007, C008) được in ra (hợp đồng: `docs/contracts.md` §8)
 
 ## Việc cần làm
+- [ ] Hàm cần viết: `load_evaluation_cases`, `evaluate_cases`, `load_dialogue_cases`, `evaluate_dialogues`, `render_evaluation`.
 - [ ] Chạy `src/data/scaffolding/sample_queries.txt`, so EXPECTED (intent, entity, query status,
       answer facts), tính accuracy.
 - [ ] Chạy riêng `challenge_queries.txt` cho error analysis.

@@ -1,15 +1,14 @@
-# 🔥 Grammar — việc còn lại sau phase 1
+# T18 · 🔥 Grammar mở rộng sau phase 1
 
 - **Trạng thái:** chưa làm
 - **Phụ trách:** chưa giao
-- **File:** `src/data/grammar.cfg`
-- **Output:** `src/output/grammar.txt`
+- **Code:** `src/data/grammar.cfg`
+- **Nghiệm thu:** 26 nhánh, 42/42 câu mẫu, 0 câu mơ hồ; chạy lại `python tools/make_golden.py`
 
-Phase 1 đã xong (`done/phase1-grammar-merge.md`). Còn lại:
+Phase 1 đã xong (`done/T03-grammar-phase1.md`). Bản sao `output/grammar.txt` do T16 ghi. Còn lại:
 
 ## Việc cần làm
-- [ ] Xuất `output/grammar.txt` (cần `output.py`).
-- [ ] Khi `semantic-intent-entity.md` xong phần FEAT_*: thêm cách gọi tính năng BTL của Khoa
+- [ ] Khi `T11-semantic.md` xong phần FEAT_*: thêm cách gọi tính năng BTL của Khoa
       (`grammar`, `parse tree`, `intent`, `entity`, `kb`, `hội thoại`, `test set`, `metric`, …)
       vào `ASSIGNMENT_FEATURE`, gom theo `FEAT_PARSING` / `FEAT_SEMANTIC` / `FEAT_CONTEXT` / `FEAT_EVAL`.
 - [ ] Khi lexicon có alias mới: thêm `dịch máy` vào `RESOURCE_TOPIC`, `thư viện có sẵn` vào `RULE_TOPIC`.

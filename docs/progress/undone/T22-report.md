@@ -1,14 +1,14 @@
-# 🔥 Báo cáo
+# T22 · 🔥 Báo cáo
 
 - **Trạng thái:** chưa làm
 - **Phụ trách:** chưa giao
 - **Yêu cầu:** đề mục 6 (Phần IV) và 7.6
 
-Cần trước: `evaluation.md` (số liệu), phần lớn pipeline chạy được.
+Cần trước: `T17-evaluation.md` (số liệu), phần lớn pipeline chạy được.
 
 ## Việc cần làm
 - [ ] Kiến trúc pipeline: Input → Grammar/Parser → cây → Semantic → Intent/Entity → KB → Answer.
-- [ ] Grammar: 26 nhánh, cách mở rộng ở phase 1 (`done/phase1-grammar-merge.md`).
+- [ ] Grammar: 26 nhánh, cách mở rộng ở phase 1 (`done/T03-grammar-phase1.md`).
 - [ ] Đánh giá (tối thiểu theo đề): số câu kiểm thử, số câu đúng, độ chính xác, một số ca trả lời
       sai, **phân tích nguyên nhân lỗi**, ưu/nhược của phương pháp.
 - [ ] Hạn chế và hướng mở rộng.

@@ -3,7 +3,7 @@
 `kb/` and `scaffolding/` are the complete dataset copied from the reference
 project on branch `sample` (`docs/sample-src/data/`). `grammar.cfg` is the
 phase 1 grammar: the frozen reference grammar plus the alternatives accepted from
-the team's PRs (see `docs/progress/done/phase1-grammar-merge.md`).
+the team's PRs (see `docs/progress/done/T03-grammar-phase1.md`).
 
 - `grammar.cfg`: one syntactic source of truth for parser and generator, with
   the 26 semantic `Q_*` branches. Add new phrasings as alternatives of an

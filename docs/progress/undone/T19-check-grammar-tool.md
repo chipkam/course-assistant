@@ -1,4 +1,4 @@
-# 🔧 Script kiểm tra grammar dùng chung
+# T19 · 🔧 Script kiểm tra grammar dùng chung
 
 - **Trạng thái:** chưa làm
 - **Phụ trách:** chưa giao
@@ -15,7 +15,7 @@ trước khi mở PR.
 - [ ] Chạy cả pipeline trên câu sinh ra: intent ≠ UNKNOWN, entity ≠ None, query tìm thấy.
 
 ## Ghi chú
-- Các bước đã dùng để gộp phase 1: `done/phase1-grammar-merge.md`, mục "Cách kiểm tra". Khi code
+- Các bước đã dùng để gộp phase 1: `done/T03-grammar-phase1.md`, mục "Cách kiểm tra". Khi code
   của nhóm chưa xong thì chạy bằng code của nhánh `sample`.
 - `tools/make_golden.py` đã có sẵn phần lấy code `sample` qua `git archive` và chạy trên
   `src/data/` — dùng lại cách đó. Sau khi đổi grammar, chạy lại nó rồi chạy test hợp đồng.

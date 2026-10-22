@@ -1,4 +1,4 @@
-# 🔧 KB loader
+# T12 · 🔧 KB loader
 
 - **Trạng thái:** chưa làm
 - **Phụ trách:** chưa giao
@@ -10,6 +10,8 @@
 Nền của phần query — nên làm sớm, song song với Phần I.
 
 ## Việc cần làm
+- [ ] Hàm cần viết: `KnowledgeBase.load`, `KnowledgeBase.validate`.
+- [ ] Test mẫu `src/tests/test_kb.py`: thay 2 `skipTest` TODO (đếm bản ghi; KB hỏng phải báo lỗi).
 - [ ] Đọc 6 file `src/data/kb/*.txt` (mỗi file một format riêng) thành cấu trúc tra được (dict/index).
 - [ ] Index theo ID chuẩn: `WEEK_NN`, `CHNN`, `LOx.y`, `PART_I..IV`, ID resource/rule.
 - [ ] `validate()`: kiểm schema và tham chiếu chéo (chương trong lịch phải có trong topics, …).

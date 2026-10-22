@@ -30,8 +30,8 @@ parsing?". "Nó" = CH04.
   / intent / KB, lựa chọn hướng, cách đánh giá, hạn chế (đề 7.5).
 - `Dockerfile`: bài chấm bằng Docker.
 - Báo cáo, video demo, zip đúng cấu trúc `project/` < 10MB (đề 7.4, 7.6).
-- Việc cụ thể: `docs/progress/undone/` (`readme`, `dockerfile`, `report`, `demo-video`,
-  `submission`).
+- Việc cụ thể: `docs/progress/` — T20 README, T21 Dockerfile, T22 báo cáo, T23 video,
+  T24 đóng gói.
 
 ---
 
