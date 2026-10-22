@@ -1,11 +1,13 @@
 # Data
 
 `kb/` and `scaffolding/` are the complete dataset copied from the reference
-project on branch `sample` (`docs/sample-src/data/`). `grammar.cfg` is the only
-template here: it is a valid seed CFG to be extended, not the completed grammar.
+project on branch `sample` (`docs/sample-src/data/`). `grammar.cfg` is the
+phase 1 grammar: the frozen reference grammar plus the alternatives accepted from
+the team's PRs (see `docs/progress/done/phase1-grammar-merge.md`).
 
-- `grammar.cfg`: one syntactic source of truth for parser and generator; seed
-  template with every semantic `Q_*` branch, to be extended.
+- `grammar.cfg`: one syntactic source of truth for parser and generator, with
+  the 26 semantic `Q_*` branches. Add new phrasings as alternatives of an
+  existing branch, never as a new `Q_*` branch.
 - `kb/`: course facts queried at runtime, copied from the sample data supplied
   with the CO3085 assignment.
 - `scaffolding/entities.txt`: lexicon for grammar design and entity
