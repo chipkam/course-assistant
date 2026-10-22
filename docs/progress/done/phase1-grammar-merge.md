@@ -9,7 +9,7 @@
 PR #1, #2, #3 **không merge trực tiếp** (đôi một conflict ở `grammar.cfg`; #3 crash; #2 kèm 71
 file ngoài phạm vi). Thay vào đó lấy **grammar của nhánh `sample` (đóng băng) làm nền**, rồi chọn
 lọc từng cách hỏi của 3 người mà sample chưa có: nhận nếu không làm hỏng gì, loại nếu không sửa
-được. Còn lại: đóng 3 PR (`undone/close-phase1-prs.md`).
+được. 3 PR kết thúc bằng merge tay: `close-phase1-prs.md`.
 
 ---
 
@@ -157,7 +157,7 @@ nhánh có sẵn → chứng tỏ không cần nhánh mới.
 - 4 nhánh mới — giữ 26 nhánh.
 - `"context" "-" "free"` — sample đã viết đúng `"context-free"`.
 - `Tài liệu nào nói về X là gì` — đuôi "là gì" thừa sau "nào".
-- Phần pipeline (71 file) — ngoài phạm vi grammar, xem `undone/pr2-pipeline-decision.md`.
+- Phần pipeline (71 file) — ngoài phạm vi grammar, xem `done/pr2-pipeline-decision.md` (quyết định: không dùng làm nền).
 
 ### 3.3 Khoa — PR #3
 

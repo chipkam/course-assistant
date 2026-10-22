@@ -8,6 +8,6 @@
 ## Việc cần làm
 - [ ] Thành viên (tên, MSSV), cài đặt, cách chạy (cả Docker).
 - [ ] Kiến trúc; grammar; parser; semantic; intent/entity; KB và cách truy vấn.
-- [ ] Lựa chọn hướng: Classical/Statistical (Lựa chọn 1) hay có thêm LLM/RAG.
+- [ ] Lựa chọn hướng: Phần II Lựa chọn 1 — Classical (luật/keyword), không dùng LLM/RAG.
 - [ ] Cách đánh giá; **hạn chế**.
 - [ ] File / model lớn để ngoài zip thì để link ở đây.

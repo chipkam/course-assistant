@@ -14,8 +14,8 @@
 **Đừng lẫn 2 tầng lựa chọn:**
 - **Fork BẮT BUỘC** nằm TRONG Lựa chọn 1 = **classical ↔ statistical** (2 cách làm
   tầng intent/entity, chọn 1). Đã chọn **classical**.
-- **LLM/RAG = Lựa chọn 2 = optional "sau nữa"** (§4.2 "không bắt buộc"), **KHÔNG**
-  thay core NLP (§7.3, §9). Chỉ đụng khi core + eval đã chắc (✨).
+- **LLM/RAG = Lựa chọn 2** (§4.2 "không bắt buộc"), **KHÔNG** thay core NLP (§7.3, §9).
+  Nhóm đã chọn Lựa chọn 1 → **không làm**.
 
 ## 1. BẮT BUỘC vs ĐÃ CHỌN — bảng tổng
 | Thành phần | BẮT BUỘC | ĐÃ CHỌN | Output | Doc |
@@ -91,7 +91,7 @@ nhiều nhánh cùng tiền tố và nhiều ký hiệu rỗng (grammar có `PRE
 dùng **chart parser / Earley** (Chương 3).
 
 ## 5. KHÔNG làm (YAGNI — tiết kiệm để dồn vào grammar + semantic)
-- LLM/RAG (✨ optional) — chỉ đụng khi core + eval xong chắc.
+- LLM/RAG (Lựa chọn 2) — nhóm đã chọn Classical.
 - Dialogue Manager phức tạp, agent, tool-calling, fine-tune (§4.2 nói rõ không cần).
 - ML/DL cho intent (keyword đủ).
 

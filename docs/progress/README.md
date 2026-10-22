@@ -33,12 +33,13 @@ Legend dùng trong tiêu đề: ✅ có sẵn · 🔥 tốn công/ăn điểm ·
 | Ghép | 🔧 Pipeline + CLI + ghi 9 file output (`run.py all`) | `undone/pipeline-cli-output.md` |
 | Phần IV | 🔧 Evaluation + mở rộng bộ test | `undone/evaluation.md` |
 | Optional | ✨ Phần III — Dialogue | `undone/dialogue.md` |
-| Optional | ✨ Phần II Lựa chọn 2 — RAG/LLM | `undone/rag-llm.md` |
 | Nộp bài | 🔥 Báo cáo (+ ghi nguồn, khai báo AI) | `undone/report.md` |
 | Nộp bài | 🔧 Video demo + thuyết trình | `undone/demo-video.md` |
 | Nộp bài | 🔧 README, Dockerfile, đóng gói zip | `undone/readme.md`, `undone/dockerfile.md`, `undone/submission.md` |
 | Quy trình | 🔧 Hợp đồng giữa các tầng + golden test | `done/contracts-golden.md` |
-| Quy trình | 🔧 Quyết định treo, codebase PR #2, đóng PR phase 1, script check grammar | `undone/open-decisions.md`, `undone/pr2-pipeline-decision.md`, `undone/close-phase1-prs.md`, `undone/check-grammar-script.md` |
+| Quy trình | 🔧 Codebase chuẩn: skeleton, không dùng pipeline PR #2 | `done/pr2-pipeline-decision.md` |
+| Quy trình | 🔧 Kết thúc PR phase 1 (merge tay) | `done/close-phase1-prs.md` |
+| Quy trình | 🔧 Quyết định treo, script check grammar | `undone/open-decisions.md`, `undone/check-grammar-script.md` |
 
 ## Ai đọc KB khi nào (đừng lẫn)
 

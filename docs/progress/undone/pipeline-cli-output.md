@@ -16,11 +16,10 @@ Cần trước: các tầng còn lại (ít nhất tokenizer, parser, semantic, 
 - [ ] Reader của `input/sentences.txt`: bỏ dòng trống và dòng bắt đầu bằng `#`; chạy theo thứ tự,
       **giữ ngữ cảnh** giữa các dòng (câu "Nó…", "Phần đó…" tham chiếu câu trước).
 - [ ] `output.py`: `write_grammar`, `write_samples` (≤ 10 000), `write_pipeline_outputs`
-      (`parse-results.txt` in `()` cho câu ngoài văn phạm, `semantic.txt`, `intent-entity.txt`,
-      `query.txt`, `answer.txt`), cùng `dialogue.txt`, `evaluation.txt` (từ `evaluate.py`).
-- [ ] **Chốt định dạng 9 file** (`docs/contracts.md` §9 để lỏng): theo placeholder hiện có trong
-      `src/output/` (ví dụ `query.txt` = `ID<TAB>query<TAB>status<TAB>source`) hay theo sample.
-      Ghi lại quyết định vào §9.
+      (`parse-results.txt`, `semantic.txt`, `intent-entity.txt`, `query.txt`, `answer.txt`), cùng
+      `dialogue.txt`, `evaluation.txt` (từ `evaluate.py`) — **định dạng đúng `docs/contracts.md` §9**
+      (đã chốt theo sample).
+- [ ] Chạy `python run.py all`, so từng file với bản của sample về định dạng.
 
 ## Ghi chú
 - Tham khảo định dạng của sample: `git show sample:docs/sample-src/output/<file>.txt`.

@@ -20,7 +20,7 @@ Hợp đồng được kiểm bằng máy: `src/tests/test_contract_*.py` chạy
 | Query | `found`, `kind`, `sources`, `data` (khi found) | chuỗi `query`, `reason`, cách tra |
 | Answer | loại câu trả lời, dữ kiện bắt buộc, 3 câu fallback | câu chữ, template |
 | Dialogue | frame sau khi giải tham chiếu | chuỗi giải thích `context_used`, cấu trúc lưu |
-| Output files | tên 9 file; `()` cho câu ngoài văn phạm; `samples.txt` ≤ 10 000 dòng | định dạng còn lại |
+| Output files | tên + định dạng 9 file (§9, theo sample) | cách ghi file |
 
 ## 0. Chạy kiểm tra
 
@@ -194,10 +194,30 @@ Golden: `cases.jsonl` (42 câu mẫu + 8 câu thách thức, có cờ `reference
 
 ## 9. Output files
 
-Tên file cố định trong `src/output/`: `grammar.txt`, `samples.txt`, `parse-results.txt`,
-`semantic.txt`, `intent-entity.txt`, `query.txt`, `answer.txt`, `dialogue.txt`, `evaluation.txt`.
-Đề chỉ bắt buộc: câu ngoài văn phạm in `()`; `samples.txt` mỗi dòng một câu, tối đa 10 000 câu.
-Định dạng còn lại tự do — thống nhất trong PR `output.py`.
+**Chốt theo định dạng của sample** (xem bản thật: `git show sample:docs/sample-src/output/<file>`).
+Đề chỉ bắt buộc: câu ngoài văn phạm in `()`; `samples.txt` mỗi dòng một câu, tối đa 10 000 câu —
+phần còn lại nhóm chốt như dưới. UTF-8, xuống dòng `\n`.
+
+Đầu vào: `input/sentences.txt`, bỏ dòng trống và dòng bắt đầu bằng `#`, chạy theo thứ tự với ngữ
+cảnh giữ giữa các câu. `ID` = số thứ tự câu trong input, 3 chữ số (`001`, `002`…). Các file theo
+từng câu có đúng một bản ghi cho mỗi câu, cùng thứ tự.
+
+| File | Định dạng mỗi dòng / khối | Ví dụ |
+| --- | --- | --- |
+| `grammar.txt` | bản sao nguyên văn `data/grammar.cfg` dùng cho lần chạy | — |
+| `samples.txt` | một câu sinh từ grammar mỗi dòng (detokenize, viết hoa chữ đầu, có `?`) | `Cho mình hỏi môn học gồm những phần nào ạ?` |
+| `parse-results.txt` | `Tree.bracketed()` của câu, hoặc `()` nếu bị từ chối; không có ID | `(S (PREFIX ε) (QUESTION (Q_SCHEDULE_WEEK (WEEK_ENTITY tuần (WEEK_NUMBER 3)) (WEEK_CONTENT_QUESTION học gì))) (SUFFIX (END_MARK ?)))` |
+| `semantic.txt` | `ID<TAB>predicate`; câu ngữ cảnh: `raw => resolved [context_used]` | `002	GET_SCHEDULE(entity=WEEK_03, week=WEEK_03)` · `007	CONTEXT_DEPENDENT(action=TOPIC_RELATION, relation=PARSING) => GET_TOPIC(entity=CH04, chapter=CH04, relation=PARSING) [tham chiếu gần nhất → CH04]` · `009	UNKNOWN()` |
+| `intent-entity.txt` | một object JSON mỗi dòng, khoá sắp theo chữ cái: `entity` (sau khi giải ngữ cảnh, `null` nếu không có), `id` (số), `intent` (trước giải), `question`, `resolved_intent` | `{"entity": "CH04", "id": 7, "intent": "CONTEXT_DEPENDENT", "question": "Nó có liên quan đến parsing không?", "resolved_intent": "GET_TOPIC"}` |
+| `query.txt` | `ID<TAB>query<TAB>status=FOUND\|NOT_FOUND<TAB>source=<file, …>` hoặc `source=-` | `002	KB.weeks[WEEK_03]	status=FOUND	source=kb/schedule.txt` · `009	NO_QUERY	status=NOT_FOUND	source=-` |
+| `answer.txt` | 2 dòng mỗi câu: `ID<TAB>Q: <câu hỏi>` rồi `<TAB>A: <câu trả lời>` | `008	Q: Tuần 99 học gì?` / `	A: Xin lỗi, tôi không tìm thấy thông tin này trong dữ liệu của môn học.` |
+| `dialogue.txt` | tiêu đề `LOCAL DISCOURSE CONTEXT RESULTS`; mỗi hội thoại: `Dxx \| PASS\|FAIL \| expected=… \| resolved=…`, rồi mỗi lượt `Un:`, `PARSEn:`, `SEMANTICn:`, `CONTEXTn:` (nếu có), `An:`, dòng trống; cuối: `Tổng: x/y hội thoại đúng (p%).` | `D01 \| PASS \| expected=CH03 \| resolved=CH03` |
+| `evaluation.txt` | tiêu đề `COURSE ASSISTANT - EVALUATION REPORT` + mô tả phương pháp; mục **A** bộ của đề, **B** bộ thử thách — mỗi mục: số câu, tỉ lệ intent / entity / query-status / answer-fact / end-to-end, rồi bảng `ID \| Kết quả \| Expected \| Actual \| Parse \| Query expected/actual \| Answer`; mục **C** phân tích lỗi từng ca sai; mục **D** ưu điểm và hạn chế | `Q026 \| PASS \| UNKNOWN/OUT_OF_SCOPE \| UNKNOWN/OUT_OF_SCOPE \| () \| SKIPPED/SKIPPED \| ok` |
+
+Ghi chú: `query.txt` chỉ có 2 trạng thái (câu không parse được in `NO_QUERY status=NOT_FOUND`),
+còn `evaluation.txt` tách thêm `SKIPPED` (§8) — giữ đúng như sample.
+
+Không có golden test cho output: nghiệm thu bằng review, so định dạng với bản của sample.
 
 ## 10. Đổi hợp đồng
 

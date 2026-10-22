@@ -20,4 +20,4 @@
 - Code đọc data qua `ProjectPaths.from_root(root)` → `root/data/...`, với root là `src/`.
 - PR #2 (Bách) có sửa `entities.txt`, `sample_queries.txt`, `dialogues.txt`,
   `challenge_queries.txt` theo format code riêng — sẽ conflict nếu merge PR đó sau commit này
-  (xem `undone/pr2-pipeline-decision.md`).
+  (PR này không merge — xem `done/pr2-pipeline-decision.md`).
