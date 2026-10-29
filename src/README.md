@@ -4,7 +4,10 @@ This directory is a self-contained implementation skeleton derived from the
 complete reference project on branch `sample` at `docs/sample-src/`. It mirrors
 the reference project's code, data, input, output, tests, packaging, Docker, and
 visual-documentation files. Assignment algorithms remain explicit
-`NotImplementedError` tasks; data files contain schemas and TODO placeholders.
+`NotImplementedError` tasks. `data/kb/` and `data/scaffolding/` hold the complete
+supplied dataset copied from the reference project, and `data/grammar.cfg` is the
+phase 1 grammar: the reference grammar plus the team's accepted alternatives.
+Progress is tracked in `../docs/progress/`.
 
 ## Call flow
 
@@ -47,15 +50,14 @@ question
 ```text
 src/
 ├── data/
-│   ├── grammar.cfg              # valid seed CFG + every semantic Q_* branch
-│   ├── kb/                      # six authoritative-data schemas
+│   ├── grammar.cfg              # phase 1 CFG with the 26 semantic Q_* branches
+│   ├── kb/                      # six authoritative course-data files
 │   └── scaffolding/             # entities, tests, challenges, dialogues, FAQ
 ├── hcmut/iaslab/nlp/app/        # replaceable pipeline stages
 ├── input/sentences.txt          # batch-input template
 ├── models/README.md             # optional model policy
 ├── output/                      # all nine required deliverable placeholders
 ├── tests/                       # KB, parser/generator, and pipeline test skeletons
-├── visually-explained-documentation.html
 ├── Dockerfile
 ├── pyproject.toml
 ├── setup.py
@@ -63,8 +65,16 @@ src/
 └── run.py
 ```
 
-The placeholder files are intentional: they show the required schema and output
-format without copying the completed answers from the `sample` branch.
+The `input/` and `output/` placeholders are intentional: they show the required
+schema and output format without copying the completed results from the `sample`
+branch. The data under `data/kb/` and `data/scaffolding/` is the full reference
+dataset, and `data/grammar.cfg` is the merged phase 1 grammar.
+
+Stage boundaries are fixed by `../docs/contracts.md` and checked by
+`tests/test_contract_*.py` against golden records in `tests/golden/`
+(regenerate with `python tools/make_golden.py` from the repository root). Run
+`python -m unittest discover -s tests -t .` from this directory; a stage that
+still raises `NotImplementedError` is skipped rather than failed.
 
 Every Python file starts with a module docstring describing its boundary,
 invariants, and intended extension points. Read those docstrings before filling

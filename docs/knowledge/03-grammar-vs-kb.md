@@ -47,8 +47,8 @@ Intent chỉ ghi phiếu "tìm week=99"; query mới lục tủ.
 ## 5. Data này KHÔNG thuần raw — 2 rổ
 | Rổ | Folder | Bản chất | Máy có query không? |
 |---|---|---|---|
-| **KB thật** | `data/kb/` | nội dung môn học | **CÓ** — tủ để tra lúc chạy |
-| **Phao** (scaffolding) | `data/scaffolding/` + `00_README.txt` | gợi ý để XÂY | **KHÔNG** — bạn đọc lúc code |
+| **KB thật** | `src/data/kb/` | nội dung môn học | **CÓ** — tủ để tra lúc chạy |
+| **Phao** (scaffolding) | `src/data/scaffolding/` + `src/data/README.md` | gợi ý để XÂY | **KHÔNG** — bạn đọc lúc code |
 
 - `entities.txt` = lớp ① + ② dọn sẵn (**cho luôn cả list INTENT**).
 - `sample_queries.txt` = test có nhãn đáp án (cho Phần IV).

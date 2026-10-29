@@ -1,7 +1,7 @@
 # Bài tập lớn NLP (CO3085) — Trợ lý hỗ trợ học tập (Course Assistant)
 
 > Bản trích sạch từ `NLPAssignment-Course Assistant.pdf` (11 trang) để đọc nhanh.
-> Trung thành với đề; phân tích/đề xuất kiến trúc xem `docs/architecture.md`.
+> Trung thành với đề; phân tích/đề xuất kiến trúc xem `docs/knowledge/architecture.md`.
 > Đánh dấu của **đề**: `*` = phần mở rộng (Phần III); LLM/RAG = "không bắt buộc".
 
 ## 1. Giới thiệu

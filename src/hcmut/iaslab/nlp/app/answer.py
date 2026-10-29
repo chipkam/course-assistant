@@ -14,7 +14,7 @@ from .query import QueryResult
 from .semantic import SemanticFrame
 
 
-NOT_FOUND = "Xin lỗi, tôi không tìm thấy thông tin này trong dữ liệu môn học."
+NOT_FOUND = "Xin lỗi, tôi không tìm thấy thông tin này trong dữ liệu của môn học."
 NOT_UNDERSTOOD = "Xin lỗi, câu hỏi nằm ngoài văn phạm hoặc phạm vi Course Assistant."
 MISSING_CONTEXT = "Xin lỗi, tôi chưa có đủ ngữ cảnh để hiểu tham chiếu này."
 
